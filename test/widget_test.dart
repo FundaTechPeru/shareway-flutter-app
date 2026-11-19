@@ -1,30 +1,70 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:shareway_flutter_app/main.dart';
+import 'package:shareway_flutter_app/app.dart';
+import 'package:shareway_flutter_app/passenger/presentation/views/emergency/emergency_alert_screen.dart';
+import 'package:shareway_flutter_app/passenger/presentation/views/emergency/expired_link_screen.dart';
+import 'package:shareway_flutter_app/passenger/presentation/views/emergency/live_tracking_screen.dart';
+import 'package:shareway_flutter_app/passenger/presentation/views/notifications/notifications_screen.dart';
+
+/// Vuelca una pantalla suelta sin pasar por el splash.
+Future<void> _pumpStandalone(WidgetTester tester, Widget screen) async {
+  await tester.pumpWidget(MaterialApp(home: screen));
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('muestra el splash de ShareWay', (WidgetTester tester) async {
+    await tester.pumpWidget(const ShareWayApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('ShareWay'), findsOneWidget);
+    expect(find.text('Viajes compartidos y programados'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('el splash navega al onboarding', (WidgetTester tester) async {
+    await tester.pumpWidget(const ShareWayApp());
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tu viaje compartido, sin improvisar'), findsOneWidget);
+    expect(find.text('Crear cuenta'), findsOneWidget);
+  });
+
+  testWidgets('EME-01 muestra el seguimiento en vivo', (tester) async {
+    await _pumpStandalone(tester, const LiveTrackingScreen());
+
+    expect(find.text('En vivo'), findsOneWidget);
+    expect(find.text('Lucía va camino a San Isidro'), findsOneWidget);
+    expect(find.text('Toyota Yaris 2019'), findsOneWidget);
+    expect(find.text('BKL-482'), findsOneWidget);
+  });
+
+  testWidgets('EME-02 muestra la alerta de emergencia', (tester) async {
+    await _pumpStandalone(tester, const EmergencyAlertScreen());
+
+    expect(find.text('Emergencia'), findsOneWidget);
+    expect(find.text('Carlos activó una alerta'), findsOneWidget);
+    expect(find.text('Av. Arenales 1250, Lince'), findsOneWidget);
+    expect(find.text('Te avisamos porque eres su contacto.'), findsOneWidget);
+  });
+
+  testWidgets('EME-03 muestra el enlace expirado', (tester) async {
+    await _pumpStandalone(tester, const ExpiredLinkScreen());
+
+    expect(find.text('Este enlace ya no está disponible'), findsOneWidget);
+    expect(find.text('¿Necesitas ubicar a Lucía?'), findsOneWidget);
+    expect(
+      find.text('ShareWay · viajes compartidos y programados'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('los avisos se agrupan por fecha', (tester) async {
+    await _pumpStandalone(tester, const NotificationsScreen());
+
+    expect(find.text('Avisos'), findsOneWidget);
+    expect(find.text('Hoy'), findsOneWidget);
+    expect(find.text('Anteriores'), findsOneWidget);
+    expect(find.text('Carlos activó una alerta'), findsOneWidget);
   });
 }
