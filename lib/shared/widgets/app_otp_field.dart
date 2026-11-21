@@ -33,9 +33,7 @@ class _AppOtpFieldState extends State<AppOtpField> {
     _controllers = List.generate(
       widget.length,
       (i) => TextEditingController(
-        text: i < widget.initialValue.length
-            ? widget.initialValue[i]
-            : '',
+        text: i < widget.initialValue.length ? widget.initialValue[i] : '',
       ),
     );
     _focusNodes = List.generate(widget.length, (_) => FocusNode());
@@ -57,8 +55,7 @@ class _AppOtpFieldState extends State<AppOtpField> {
       // Pega un código completo: repartelo en los casilleros.
       final String digits = text.replaceAll(RegExp(r'\D'), '');
       for (int i = 0; i < widget.length; i++) {
-        _controllers[i].text =
-            i < digits.length ? digits[i] : '';
+        _controllers[i].text = i < digits.length ? digits[i] : '';
       }
       _focusNodes[widget.length - 1].requestFocus();
     } else if (text.isEmpty && index > 0) {

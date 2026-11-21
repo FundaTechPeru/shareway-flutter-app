@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/profile_data.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -43,24 +44,17 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                         horizontal: AppSpacing.lg,
                       ),
                       child: Column(
-                        children: const [
-                          _ContactRow(
-                            initials: 'RP',
-                            name: 'Rosa Paredes',
-                            meta: 'Mamá · +51 987 112 204',
-                            background: AppColors.accentSoft,
-                            foreground: AppColors.warning,
-                            primary: true,
-                          ),
-                          Divider(),
-                          _ContactRow(
-                            initials: 'DP',
-                            name: 'Diego Paredes',
-                            meta: 'Hermano · +51 986 440 871',
-                            background: AppColors.primarySoft,
-                            foreground: AppColors.primaryDark,
-                            primary: false,
-                          ),
+                        children: [
+                          for (
+                            var i = 0;
+                            i < ProfileData.emergencyContacts.length;
+                            i++
+                          ) ...[
+                            if (i > 0) const Divider(),
+                            _ContactRow(
+                              contact: ProfileData.emergencyContacts[i],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -125,8 +119,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.surface2,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,21 +175,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 }
 
 class _ContactRow extends StatelessWidget {
-  const _ContactRow({
-    required this.initials,
-    required this.name,
-    required this.meta,
-    required this.background,
-    required this.foreground,
-    required this.primary,
-  });
+  const _ContactRow({required this.contact});
 
-  final String initials;
-  final String name;
-  final String meta;
-  final Color background;
-  final Color foreground;
-  final bool primary;
+  final EmergencyContact contact;
 
   @override
   Widget build(BuildContext context) {
@@ -206,14 +189,17 @@ class _ContactRow extends StatelessWidget {
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: contact.background,
+              shape: BoxShape.circle,
+            ),
             child: Text(
-              initials,
+              contact.initials,
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: foreground,
+                color: contact.foreground,
               ),
             ),
           ),
@@ -223,19 +209,19 @@ class _ContactRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  contact.name,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(meta, style: AppTypography.support),
+                Text(contact.meta, style: AppTypography.support),
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          if (primary)
+          if (contact.primary)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
@@ -291,11 +277,7 @@ class _InputField extends StatelessWidget {
 }
 
 class _LabeledSelect extends StatelessWidget {
-  const _LabeledSelect({
-    required this.label,
-    required this.value,
-    this.icon,
-  });
+  const _LabeledSelect({required this.label, required this.value, this.icon});
 
   final String label;
   final String value;

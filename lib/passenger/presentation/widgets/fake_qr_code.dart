@@ -7,21 +7,14 @@ import '../../../shared/theme/app_colors.dart';
 /// No es un QR válido: reproduce el aspecto del código de la referencia
 /// (PAS-11) sin añadir una dependencia de generación de códigos.
 class FakeQrCode extends StatelessWidget {
-  const FakeQrCode({
-    super.key,
-    this.size = 212,
-    this.seed = 20251007,
-  });
+  const FakeQrCode({super.key, this.size = 212, this.seed = 20251007});
 
   final double size;
   final int seed;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _QrPainter(seed),
-    );
+    return CustomPaint(size: Size.square(size), painter: _QrPainter(seed));
   }
 }
 
@@ -57,10 +50,7 @@ class _QrPainter extends CustomPainter {
       for (int x = 0; x < _modules; x++) {
         if (inFinder(x, y)) continue;
         if (next() % 100 < 47) {
-          canvas.drawRect(
-            Rect.fromLTWH(x * cell, y * cell, cell, cell),
-            dark,
-          );
+          canvas.drawRect(Rect.fromLTWH(x * cell, y * cell, cell, cell), dark);
         }
       }
     }

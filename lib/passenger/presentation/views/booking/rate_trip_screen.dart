@@ -5,6 +5,8 @@ import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../data/bookings_data.dart';
+import '../../../data/passenger_data.dart';
 
 /// PAS-15 · Calificar el viaje
 class RateTripScreen extends StatefulWidget {
@@ -90,9 +92,9 @@ class _RateTripScreenState extends State<RateTripScreen> {
                         color: AppColors.primarySoft,
                         shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        'CH',
-                        style: TextStyle(
+                      child: Text(
+                        PassengerData.driver.initials,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primaryDark,
@@ -101,17 +103,17 @@ class _RateTripScreenState extends State<RateTripScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
-                      '¿Cómo estuvo tu viaje con Carlos?',
+                      '¿Cómo estuvo tu viaje con '
+                      '${PassengerData.driver.name.split(' ').first}?',
                       textAlign: TextAlign.center,
                       style: AppTypography.screenTitle.copyWith(fontSize: 27),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Mié 7 oct · Lince a San Isidro',
+                      '${BookingsData.rateTrip.schedule} · '
+                      '${BookingsData.rateTrip.route}',
                       textAlign: TextAlign.center,
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.ink2,
-                      ),
+                      style: AppTypography.body.copyWith(color: AppColors.ink2),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Row(
@@ -177,22 +179,21 @@ class _RateTripScreenState extends State<RateTripScreen> {
                         fillColor: AppColors.surface,
                         contentPadding: const EdgeInsets.all(AppSpacing.md),
                         border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusSm),
-                          borderSide: const BorderSide(
-                            color: AppColors.border,
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusSm,
                           ),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusSm),
-                          borderSide: const BorderSide(
-                            color: AppColors.border,
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusSm,
                           ),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusSm,
+                          ),
                           borderSide: const BorderSide(
                             color: AppColors.primary,
                             width: 1.6,

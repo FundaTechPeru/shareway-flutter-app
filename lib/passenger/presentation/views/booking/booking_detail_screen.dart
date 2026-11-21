@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'dart:async';
+
+import '../../../models/booking_models.dart';
+import '../../../repositories/booking_repository.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/passenger_data.dart';
 import 'boarding_code_screen.dart';
 import 'cancel_booking_screen.dart';
 import '../errors/late_penalty_sheet.dart';
 import '../errors/price_change_sheet.dart';
 
 /// PAS-09 · Detalle de mi reserva
-///
-/// Con [showPriceChange] abre el sheet PAS-E4 (cambio de precio) al abrir
-/// la pantalla. Con [lateCancellation] el botón de cancelar abre el sheet
-/// PAS-E5 (penalidad por cancelación tardía).
 class BookingDetailScreen extends StatefulWidget {
   const BookingDetailScreen({
     super.key,
@@ -35,6 +36,13 @@ class BookingDetailScreen extends StatefulWidget {
 }
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
+  final BookingRepository _bookingRepository = BookingRepository();
+  Timer? _pollingTimer;
+
+  String? _bookingId;
+  BookingStatus _status = BookingStatus.requested;
+  String _statusText = 'REQUESTED';
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +51,53 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         if (mounted) showPriceChangeSheet(context);
       });
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      _bookingId = args['bookingId']?.toString();
+      final statusStr = args['status']?.toString();
+      if (statusStr != null) {
+        _status = BookingStatus.fromString(statusStr);
+        _statusText = statusStr;
+      }
+      if (_bookingId != null && _pollingTimer == null) {
+        _startPolling();
+      }
+    }
+  }
+
+  void _startPolling() {
+    _pollBooking();
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _pollBooking(),
+    );
+  }
+
+  Future<void> _pollBooking() async {
+    if (_bookingId == null || !mounted) return;
+    try {
+      final res = await _bookingRepository.getBooking(_bookingId!);
+      if (mounted) {
+        setState(() {
+          _status = res.status;
+          _statusText = res.rawStatus ?? res.status.toApiString();
+        });
+        if (res.status != BookingStatus.requested) {
+          _pollingTimer?.cancel();
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _cancel() async {
@@ -58,7 +113,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       }
       return;
     }
-    Navigator.of(context).pushNamed(CancelBookingScreen.routeName);
+    Navigator.of(context).pushNamed(
+      CancelBookingScreen.routeName,
+      arguments: {'bookingId': _bookingId},
+    );
   }
 
   @override
@@ -88,7 +146,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   AppSpacing.lg,
                 ),
                 children: [
-                  const _StatusBanner(),
+                  _StatusBanner(status: _status, statusText: _statusText),
                   const SizedBox(height: AppSpacing.md),
                   const _VehicleCard(),
                   const SizedBox(height: AppSpacing.md),
@@ -110,8 +168,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     foregroundColor: AppColors.error,
                     side: const BorderSide(color: AppColors.error),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusPill),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.radiusPill,
+                      ),
                     ),
                     textStyle: AppTypography.body.copyWith(
                       fontWeight: FontWeight.w600,
@@ -129,38 +188,76 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 }
 
 class _StatusBanner extends StatelessWidget {
-  const _StatusBanner();
+  const _StatusBanner({this.status = BookingStatus.requested, this.statusText});
+
+  final BookingStatus status;
+  final String? statusText;
 
   @override
   Widget build(BuildContext context) {
+    String title = 'Reserva solicitada (Procesando)';
+    String detail = 'Esperando confirmación del backend...';
+    Color bgColor = AppColors.accentSoft;
+    Color iconColor = AppColors.warning;
+    IconData icon = Icons.hourglass_top;
+
+    switch (status) {
+      case BookingStatus.confirmed:
+        title = 'Reserva confirmada';
+        detail = 'Sale hoy a las 7:10 a. m. · con Carlos H.';
+        bgColor = AppColors.successSoft;
+        iconColor = AppColors.success;
+        icon = Icons.check_circle_outline;
+        break;
+      case BookingStatus.boarded:
+        title = 'Viaje en abordaje / en curso';
+        detail = '¡Subiste al vehículo!';
+        bgColor = AppColors.primarySoft;
+        iconColor = AppColors.primary;
+        icon = Icons.directions_car;
+        break;
+      case BookingStatus.cancelled:
+        title = 'Reserva cancelada';
+        detail = 'Esta reserva fue cancelada.';
+        bgColor = AppColors.errorSoft;
+        iconColor = AppColors.error;
+        icon = Icons.cancel_outlined;
+        break;
+      default:
+        if (statusText != null) {
+          title = 'Estado: $statusText';
+        }
+        break;
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.successSoft,
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline, size: 20, color: AppColors.success),
-          SizedBox(width: 12),
+          Icon(icon, size: 20, color: iconColor),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Reserva confirmada',
+                  title,
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.success,
+                    color: iconColor,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'Sale mañana, mié 7 oct, a las 7:10 a. m.',
-                  style: TextStyle(
+                  detail,
+                  style: const TextStyle(
                     fontSize: 13.5,
                     height: 1.4,
                     color: AppColors.ink,
@@ -180,34 +277,34 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
-      padding: EdgeInsets.all(14),
+    return AppCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          _CircleIcon(icon: Icons.directions_car_outlined),
-          SizedBox(width: 14),
+          const _CircleIcon(icon: Icons.directions_car_outlined),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Toyota Yaris 2019',
-                  style: TextStyle(
+                  PassengerData.driver.vehicle,
+                  style: const TextStyle(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'Gris plata · sedán',
-                  style: TextStyle(fontSize: 13, color: AppColors.ink2),
+                  PassengerData.driver.vehicleDetail,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink2),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 10),
-          _PlateBadge(),
+          const SizedBox(width: 10),
+          const _PlateBadge(),
         ],
       ),
     );
@@ -226,9 +323,9 @@ class _PlateBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.ink, width: 1.6),
       ),
-      child: const Text(
-        'BKL-482',
-        style: TextStyle(
+      child: Text(
+        PassengerData.driver.plate,
+        style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
@@ -264,23 +361,23 @@ class _DriverRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
-      padding: EdgeInsets.all(14),
+    return AppCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
           CircleAvatar(
             radius: 21,
             backgroundColor: AppColors.primarySoft,
             child: Text(
-              'CH',
-              style: TextStyle(
+              PassengerData.driver.initials,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryDark,
               ),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,29 +385,30 @@ class _DriverRow extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Carlos Huamán',
-                      style: TextStyle(
+                      PassengerData.driver.name,
+                      style: const TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
                       ),
                     ),
-                    SizedBox(width: 6),
-                    Icon(
+                    const SizedBox(width: 6),
+                    const Icon(
                       Icons.verified,
                       size: 17,
                       color: AppColors.success,
                     ),
                   ],
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.star, size: 15, color: AppColors.accent),
-                    SizedBox(width: 4),
+                    const Icon(Icons.star, size: 15, color: AppColors.accent),
+                    const SizedBox(width: 4),
                     Text(
-                      '4.8 · 312 viajes',
-                      style: TextStyle(
+                      '${PassengerData.driver.rating} · '
+                      '${PassengerData.driver.tripsCount} viajes',
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.ink2,
                       ),
@@ -320,7 +418,7 @@ class _DriverRow extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: AppColors.ink3),
+          const Icon(Icons.chevron_right, color: AppColors.ink3),
         ],
       ),
     );
@@ -332,7 +430,9 @@ class _StopsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
+    final List<TripStop> stops = PassengerData.currentBooking.stops;
+
+    return AppCard(
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,27 +441,23 @@ class _StopsCard extends StatelessWidget {
               width: 24,
               child: Column(
                 children: [
-                  _RingDot(color: AppColors.primary),
-                  Expanded(child: ColoredBox(color: AppColors.border)),
-                  _RingDot(color: AppColors.warning),
+                  const _RingDot(color: AppColors.primary),
+                  const Expanded(child: ColoredBox(color: AppColors.border)),
+                  const _RingDot(color: AppColors.warning),
                 ],
               ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 children: [
-                  _StopLine(
-                    title: 'Av. Arequipa con Risso',
-                    subtitle: 'Tu punto de recojo',
-                    time: '7:10 a. m.',
-                    spaced: true,
-                  ),
-                  _StopLine(
-                    title: 'Av. Rivera Navarrete 501',
-                    subtitle: 'San Isidro',
-                    time: '7:38 a. m.',
-                  ),
+                  for (int i = 0; i < stops.length; i++)
+                    _StopLine(
+                      title: stops[i].title,
+                      subtitle: stops[i].subtitle,
+                      time: stops[i].time,
+                      spaced: i < stops.length - 1,
+                    ),
                 ],
               ),
             ),
@@ -407,20 +503,14 @@ class _StopLine extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 time,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.ink2,
-                ),
+                style: const TextStyle(fontSize: 13, color: AppColors.ink2),
               ),
             ],
           ),
           const SizedBox(height: 3),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.ink3,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppColors.ink3),
           ),
         ],
       ),
@@ -459,21 +549,22 @@ class _ActionsCard extends StatelessWidget {
           _ActionRow(
             icon: Icons.qr_code_2,
             label: 'Mi código de abordaje',
-            onTap: () => Navigator.of(context)
-                .pushNamed(BoardingCodeScreen.routeName),
+            onTap: () =>
+                Navigator.of(context).pushNamed(BoardingCodeScreen.routeName),
           ),
           const Divider(),
           _ActionRow(
             icon: Icons.share,
             label: 'Compartir mi ubicación',
-            onTap: () => Navigator.of(context)
-                .pushNamed('/passenger/share-location'),
+            onTap: () =>
+                Navigator.of(context).pushNamed('/passenger/share-location'),
           ),
           const Divider(),
           _ActionRow(
             icon: Icons.navigation_outlined,
             label: 'Seguir el viaje en el mapa',
-            onTap: () => Navigator.of(context).pushNamed('/passenger/live-trip'),
+            onTap: () =>
+                Navigator.of(context).pushNamed('/passenger/live-trip'),
           ),
         ],
       ),

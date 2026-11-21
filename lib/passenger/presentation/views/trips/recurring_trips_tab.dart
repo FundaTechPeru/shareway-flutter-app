@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
+import '../../../data/trips_extra_data.dart';
 import 'recurring_trip_form_screen.dart';
 
 /// PAS-18 · Mis viajes recurrentes (pestaña "Recurrentes")
@@ -14,46 +15,40 @@ class RecurringTripsTab extends StatefulWidget {
 }
 
 class _RecurringTripsTabState extends State<RecurringTripsTab> {
-  bool _active1 = true;
-  bool _active2 = false;
+  /// Estado de cada interruptor, en el mismo orden que
+  /// [TripsExtraData.recurringTrips].
+  final List<bool> _active = TripsExtraData.recurringTrips
+      .map((trip) => trip.initiallyActive)
+      .toList();
 
   @override
   Widget build(BuildContext context) {
+    final List<RecurringTrip> trips = TripsExtraData.recurringTrips;
+
     return Column(
       children: [
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             children: [
-              _RecurringCard(
-                from: 'Lince',
-                to: 'San Isidro',
-                schedule: 'Lun a vie · 7:00 a 8:00 a. m.',
-                active: _active1,
-                statusLabel: _active1 ? 'Activo' : 'En pausa',
-                statusNote: _active1
-                    ? 'Próxima solicitud: lun 12 oct'
-                    : 'Sin solicitudes nuevas desde el 3 oct',
-                onToggle: (value) => setState(() => _active1 = value),
-                onEdit: () => Navigator.of(context)
-                    .pushNamed(RecurringTripFormScreen.routeName),
-                onDelete: () {},
-              ),
-              const SizedBox(height: 14),
-              _RecurringCard(
-                from: 'Lince',
-                to: 'Monterrico',
-                schedule: 'Sábados · 8:30 a 9:30 a. m.',
-                active: _active2,
-                statusLabel: _active2 ? 'Activo' : 'En pausa',
-                statusNote: _active2
-                    ? 'Próxima solicitud: sáb 17 oct'
-                    : 'Sin solicitudes nuevas desde el 3 oct',
-                onToggle: (value) => setState(() => _active2 = value),
-                onEdit: () => Navigator.of(context)
-                    .pushNamed(RecurringTripFormScreen.routeName),
-                onDelete: () {},
-              ),
+              for (int i = 0; i < trips.length; i++) ...[
+                if (i > 0) const SizedBox(height: 14),
+                _RecurringCard(
+                  from: trips[i].from,
+                  to: trips[i].to,
+                  schedule: trips[i].schedule,
+                  active: _active[i],
+                  statusLabel: _active[i] ? 'Activo' : 'En pausa',
+                  statusNote: _active[i]
+                      ? trips[i].activeNote
+                      : trips[i].pausedNote,
+                  onToggle: (value) => setState(() => _active[i] = value),
+                  onEdit: () =>
+                      Navigator.of(context)
+                          .pushNamed(RecurringTripFormScreen.routeName),
+                  onDelete: () {},
+                ),
+              ],
               const SizedBox(height: AppSpacing.md),
               const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,8 +86,9 @@ class _RecurringTripsTabState extends State<RecurringTripsTab> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.of(context)
-                  .pushNamed(RecurringTripFormScreen.routeName),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .pushNamed(RecurringTripFormScreen.routeName),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -200,9 +196,7 @@ class _RecurringCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: active
-                        ? AppColors.successSoft
-                        : AppColors.surface2,
+                    color: active ? AppColors.successSoft : AppColors.surface2,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(

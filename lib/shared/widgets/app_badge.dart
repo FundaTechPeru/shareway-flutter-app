@@ -4,13 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
 /// Tono de color de un [AppBadge].
-enum AppBadgeTone {
-  neutral,
-  primary,
-  success,
-  warning,
-  error,
-}
+enum AppBadgeTone { neutral, primary, success, warning, error }
 
 /// Chip de estado redondeado ("Confirmado", "2 asientos libres", etc.).
 class AppBadge extends StatelessWidget {

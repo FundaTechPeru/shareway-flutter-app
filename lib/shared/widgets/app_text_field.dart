@@ -27,6 +27,7 @@ class AppTextField extends StatefulWidget {
     this.readOnly = false,
     this.enabled = true,
     this.autofocus = false,
+    this.errorText,
   });
 
   /// Etiqueta pequeña sobre el campo.
@@ -50,6 +51,7 @@ class AppTextField extends StatefulWidget {
   final bool readOnly;
   final bool enabled;
   final bool autofocus;
+  final String? errorText;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -85,11 +87,14 @@ class _AppTextFieldState extends State<AppTextField> {
           cursorColor: AppColors.primary,
           decoration: InputDecoration(
             hintText: widget.hint,
+            errorText: widget.errorText,
             prefixIcon: widget.icon == null
                 ? null
                 : Icon(widget.icon, size: 20),
-            prefixIconConstraints:
-                const BoxConstraints(minWidth: 46, minHeight: 20),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 46,
+              minHeight: 20,
+            ),
             suffixIcon: _buildSuffix(),
           ),
         ),

@@ -22,10 +22,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _news = false;
 
   void _logout() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      LoginScreen.routeName,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
   }
 
   @override
@@ -64,8 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: AppSpacing.xs),
             AppCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 children: [
                   _SwitchRow(
@@ -130,8 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 children: [
                   _LinkRow(
@@ -170,10 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             const Center(
-              child: Text(
-                'ShareWay 1.0.0',
-                style: AppTypography.support,
-              ),
+              child: Text('ShareWay 1.0.0', style: AppTypography.support),
             ),
           ],
         ),

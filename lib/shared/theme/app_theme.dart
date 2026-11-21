@@ -47,8 +47,10 @@ abstract class AppTheme {
       inputDecorationTheme: InputDecorationThemeData(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 18,
+        ),
         hintStyle: AppTypography.body.copyWith(color: AppColors.ink3),
         labelStyle: AppTypography.label,
         border: _border(AppColors.border),
@@ -62,8 +64,7 @@ abstract class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle:
-              AppTypography.body.copyWith(fontWeight: FontWeight.w500),
+          textStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w500),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
           ),
@@ -80,8 +81,7 @@ abstract class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle:
-              AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -91,9 +91,7 @@ abstract class AppTheme {
       ),
       checkboxTheme: CheckboxThemeData(
         side: const BorderSide(color: AppColors.borderStrong, width: 1.4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         fillColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)
               ? AppColors.primary

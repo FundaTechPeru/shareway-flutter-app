@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/auth_models.dart';
+import '../../../repositories/auth_repository.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../data/passenger_data.dart';
 import '../../passenger_shell.dart';
 import '../search/search_trip_screen.dart';
 import '../trips/recurring_trip_form_screen.dart';
@@ -63,24 +66,9 @@ class HomeScreen extends StatelessWidget {
                   if (emptyRoutes)
                     const _EmptyRoutes()
                   else ...[
-                    const _PopularRoute(
-                      from: 'Lince',
-                      to: 'San Isidro',
-                      street: 'Av. Arequipa · 12 viajes hoy',
-                      price: 'S/ 6.50',
-                    ),
-                    const _PopularRoute(
-                      from: 'Lince',
-                      to: 'Miraflores',
-                      street: 'Av. Arenales · 9 viajes hoy',
-                      price: 'S/ 7.00',
-                    ),
-                    const _PopularRoute(
-                      from: 'Jesús María',
-                      to: 'Surco',
-                      street: 'Av. Salaverry · 6 viajes hoy',
-                      price: 'S/ 9.50',
-                    ),
+                    for (final PopularRoute route
+                        in PassengerData.popularRoutes)
+                      _PopularRoute(route: route),
                   ],
                   const SizedBox(height: AppSpacing.sm),
                   SizedBox(
@@ -183,10 +171,38 @@ class _EmptyRoutes extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends StatefulWidget {
   const _Header();
+
+  @override
+  State<_Header> createState() => _HeaderState();
+}
+
+class _HeaderState extends State<_Header> {
+  final AuthRepository _authRepository = AuthRepository();
+  UserProfile? _userProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await _authRepository.getProfile();
+      if (mounted) {
+        setState(() => _userProfile = profile);
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
+    final name = _userProfile?.fullName.isNotEmpty == true
+        ? _userProfile!.fullName.split(' ')[0]
+        : PassengerData.account.name;
+
     return Container(
       width: double.infinity,
       color: AppColors.primary,
@@ -203,9 +219,9 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Hola, Lucía',
-                  style: TextStyle(
+                Text(
+                  'Hola, $name',
+                  style: const TextStyle(
                     fontSize: 24,
                     height: 1.2,
                     fontWeight: FontWeight.w700,
@@ -222,7 +238,7 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Cerca de Linde, Lima',
+                      PassengerData.account.location,
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
                         fontSize: 13.5,
@@ -339,6 +355,8 @@ class _NextTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final NextTrip trip = PassengerData.nextTrip;
+
     return AppCard(
       padding: const EdgeInsets.all(14),
       onTap: () {},
@@ -351,20 +369,20 @@ class _NextTripCard extends StatelessWidget {
               color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'MIE',
-                  style: TextStyle(
+                  trip.weekday,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryDark,
                   ),
                 ),
                 Text(
-                  '7',
-                  style: TextStyle(
+                  trip.day,
+                  style: const TextStyle(
                     fontSize: 24,
                     height: 1.15,
                     fontWeight: FontWeight.w700,
@@ -372,8 +390,8 @@ class _NextTripCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'oct',
-                  style: TextStyle(fontSize: 11, color: AppColors.ink2),
+                  trip.month,
+                  style: const TextStyle(fontSize: 11, color: AppColors.ink2),
                 ),
               ],
             ),
@@ -384,7 +402,7 @@ class _NextTripCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Lince → San Isidro',
+                  trip.route,
                   style: AppTypography.body.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -392,15 +410,12 @@ class _NextTripCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.schedule, size: 15, color: AppColors.ink2),
-                    SizedBox(width: 5),
+                    const Icon(Icons.schedule, size: 15, color: AppColors.ink2),
+                    const SizedBox(width: 5),
                     Expanded(
-                      child: Text(
-                        'Sale 7:10 a. m. · 28 min',
-                        style: AppTypography.support,
-                      ),
+                      child: Text(trip.schedule, style: AppTypography.support),
                     ),
                   ],
                 ),
@@ -410,7 +425,7 @@ class _NextTripCard extends StatelessWidget {
                     const _ConfirmedBadge(),
                     const Spacer(),
                     Text(
-                      '4 de 4 pasajeros',
+                      trip.passengers,
                       style: AppTypography.label.copyWith(
                         color: AppColors.ink3,
                       ),
@@ -459,17 +474,9 @@ class _ConfirmedBadge extends StatelessWidget {
 }
 
 class _PopularRoute extends StatelessWidget {
-  const _PopularRoute({
-    required this.from,
-    required this.to,
-    required this.street,
-    required this.price,
-  });
+  const _PopularRoute({required this.route});
 
-  final String from;
-  final String to;
-  final String street;
-  final String price;
+  final PopularRoute route;
 
   @override
   Widget build(BuildContext context) {
@@ -500,14 +507,14 @@ class _PopularRoute extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$from → $to',
+                    '${route.from} → ${route.to}',
                     style: AppTypography.body.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(street, style: AppTypography.support),
+                  Text(route.detail, style: AppTypography.support),
                 ],
               ),
             ),
@@ -521,7 +528,7 @@ class _PopularRoute extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  price,
+                  route.price,
                   style: AppTypography.highlightedData.copyWith(
                     color: AppColors.primary,
                   ),

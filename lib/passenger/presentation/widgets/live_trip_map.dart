@@ -83,11 +83,7 @@ class LiveTripMap extends StatelessWidget {
             Positioned(
               left: w * _route[4].dx - 17,
               top: h * _route[4].dy - 34,
-              child: const Icon(
-                Icons.place,
-                size: 38,
-                color: AppColors.accent,
-              ),
+              child: const Icon(Icons.place, size: 38, color: AppColors.accent),
             ),
           ],
         );
@@ -108,11 +104,26 @@ class _LiveMapPainter extends CustomPainter {
 
     // Manzanas verdes
     final Paint block = Paint()..color = const Color(0xFFDCEBDD);
-    canvas.drawRect(Rect.fromLTWH(w * 0.02, h * 0.36, w * 0.14, h * 0.07), block);
-    canvas.drawRect(Rect.fromLTWH(w * 0.78, h * 0.44, w * 0.16, h * 0.08), block);
-    canvas.drawRect(Rect.fromLTWH(w * 0.46, h * 0.62, w * 0.14, h * 0.07), block);
-    canvas.drawRect(Rect.fromLTWH(w * 0.12, h * 0.74, w * 0.16, h * 0.07), block);
-    canvas.drawRect(Rect.fromLTWH(w * 0.86, h * 0.68, w * 0.14, h * 0.08), block);
+    canvas.drawRect(
+      Rect.fromLTWH(w * 0.02, h * 0.36, w * 0.14, h * 0.07),
+      block,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w * 0.78, h * 0.44, w * 0.16, h * 0.08),
+      block,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w * 0.46, h * 0.62, w * 0.14, h * 0.07),
+      block,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w * 0.12, h * 0.74, w * 0.16, h * 0.07),
+      block,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w * 0.86, h * 0.68, w * 0.14, h * 0.08),
+      block,
+    );
 
     // Calles
     final Paint street = Paint()
@@ -120,11 +131,16 @@ class _LiveMapPainter extends CustomPainter {
       ..strokeWidth = 13
       ..strokeCap = StrokeCap.round;
 
-    const List<double> verticals = [
-      0.06, 0.2, 0.34, 0.5, 0.64, 0.79, 0.93
-    ];
+    const List<double> verticals = [0.06, 0.2, 0.34, 0.5, 0.64, 0.79, 0.93];
     const List<double> horizontals = [
-      0.08, 0.2, 0.33, 0.46, 0.6, 0.73, 0.86, 0.97
+      0.08,
+      0.2,
+      0.33,
+      0.46,
+      0.6,
+      0.73,
+      0.86,
+      0.97,
     ];
 
     for (final double x in verticals) {
@@ -145,10 +161,7 @@ class _LiveMapPainter extends CustomPainter {
     final Path path = Path()
       ..moveTo(w * LiveTripMap._route[0].dx, h * LiveTripMap._route[0].dy);
     for (int i = 1; i < LiveTripMap._route.length; i++) {
-      path.lineTo(
-        w * LiveTripMap._route[i].dx,
-        h * LiveTripMap._route[i].dy,
-      );
+      path.lineTo(w * LiveTripMap._route[i].dx, h * LiveTripMap._route[i].dy);
     }
     canvas.drawPath(path, route);
   }

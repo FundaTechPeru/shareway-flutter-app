@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/auth_models.dart';
+import '../../../repositories/auth_repository.dart';
 import '../../../../iam/presentation/views/login_screen.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
@@ -13,14 +15,45 @@ import 'emergency_contacts_screen.dart';
 import 'settings_screen.dart';
 
 /// PAS-22 · Mi perfil
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  void _logout(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      LoginScreen.routeName,
-      (route) => false,
-    );
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthRepository _authRepository = AuthRepository();
+  UserProfile? _userProfile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await _authRepository.getProfile();
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await _authRepository.logout();
+    if (!context.mounted) return;
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
   }
 
   @override
@@ -36,53 +69,58 @@ class ProfileScreen extends StatelessWidget {
             AppSpacing.xl,
           ),
           children: [
-            const _Header(),
+            _Header(profile: _userProfile, isLoading: _isLoading),
             const SizedBox(height: AppSpacing.xl),
             AppCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 children: [
                   _MenuRow(
                     icon: Icons.edit_outlined,
                     label: 'Editar perfil',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(EditProfileScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(EditProfileScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
                     icon: Icons.credit_card,
                     label: 'Métodos de pago',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(PaymentMethodsScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(PaymentMethodsScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
                     icon: Icons.shield_outlined,
                     label: 'Contactos de emergencia',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(EmergencyContactsScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(EmergencyContactsScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
                     icon: Icons.repeat,
                     label: 'Viajes recurrentes',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(RecurringTripFormScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(RecurringTripFormScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
                     icon: Icons.block,
                     label: 'Usuarios bloqueados',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(BlockedUsersScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(BlockedUsersScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
                     icon: Icons.settings_outlined,
                     label: 'Configuración',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(SettingsScreen.routeName),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .pushNamed(SettingsScreen.routeName),
                   ),
                   const Divider(),
                   _MenuRow(
@@ -115,10 +153,34 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({this.profile, this.isLoading = false});
+
+  final UserProfile? profile;
+  final bool isLoading;
+
+  String get _initials {
+    if (profile == null || profile!.fullName.isEmpty) return 'P';
+    final parts = profile!.fullName.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const SizedBox(
+        height: 66,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final name = profile?.fullName.isNotEmpty == true
+        ? profile!.fullName
+        : 'Pasajero ShareWay';
+    final email = profile?.email ?? 'pasajero@shareway.pe';
+
     return Row(
       children: [
         Container(
@@ -129,9 +191,9 @@ class _Header extends StatelessWidget {
             color: AppColors.accentSoft,
             shape: BoxShape.circle,
           ),
-          child: const Text(
-            'LP',
-            style: TextStyle(
+          child: Text(
+            _initials,
+            style: const TextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w700,
               color: AppColors.warning,
@@ -144,12 +206,12 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Lucía Paredes',
-                style: AppTypography.screenTitle.copyWith(fontSize: 25),
+                name,
+                style: AppTypography.screenTitle.copyWith(fontSize: 22),
               ),
               const SizedBox(height: 4),
               Text(
-                'Pasajera desde agosto de 2026',
+                email,
                 style: AppTypography.support.copyWith(color: AppColors.ink2),
               ),
               const SizedBox(height: 6),
@@ -158,7 +220,7 @@ class _Header extends StatelessWidget {
                   const Icon(Icons.star, size: 16, color: AppColors.accent),
                   const SizedBox(width: 5),
                   Text(
-                    '4.9 · 18 viajes',
+                    '5.0 · Pasajero verificado',
                     style: AppTypography.support.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,

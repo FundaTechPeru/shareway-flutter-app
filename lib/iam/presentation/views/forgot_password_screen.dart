@@ -19,8 +19,9 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final TextEditingController _account =
-      TextEditingController(text: 'lucia.paredes@correo.pe');
+  final TextEditingController _account = TextEditingController(
+    text: 'lucia.paredes@correo.pe',
+  );
 
   @override
   void dispose() {
@@ -66,8 +67,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Text(
                       'Escribe el correo o el celular de tu cuenta y te '
                       'enviaremos un enlace para crear una nueva.',
-                      style:
-                          AppTypography.body.copyWith(color: AppColors.ink2),
+                      style: AppTypography.body.copyWith(color: AppColors.ink2),
                     ),
                     const SizedBox(height: 26),
                     AppTextField(
@@ -84,7 +84,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const AppInfoCard(
                       icon: Icons.schedule,
                       title: 'El enlace vence en 30 minutos',
-                      message: 'Si los datos corresponden a una cuenta, '
+                      message:
+                          'Si los datos corresponden a una cuenta, '
                           'recibirás el mensaje en unos segundos.',
                     ),
                   ],

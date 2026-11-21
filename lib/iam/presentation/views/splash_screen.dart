@@ -1,11 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/auth/auth_service.dart';
+import '../../../passenger/presentation/passenger_shell.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app_logo.dart';
-import 'onboarding_screen.dart';
+import 'login_screen.dart';
 
 /// ACC-01 · Splash
 class SplashScreen extends StatefulWidget {
@@ -18,21 +18,27 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  late final Timer _timer;
-
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 2200), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(OnboardingScreen.routeName);
-    });
+    _checkAuthAndNavigate();
   }
 
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
+  Future<void> _checkAuthAndNavigate() async {
+    final start = DateTime.now();
+    final isValid = await AuthService.instance.checkSession();
+    final elapsed = DateTime.now().difference(start).inMilliseconds;
+
+    if (elapsed < 1500) {
+      await Future.delayed(Duration(milliseconds: 1500 - elapsed));
+    }
+
+    if (!mounted) return;
+    if (isValid) {
+      Navigator.of(context).pushReplacementNamed(PassengerShell.routeName);
+    } else {
+      Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+    }
   }
 
   @override

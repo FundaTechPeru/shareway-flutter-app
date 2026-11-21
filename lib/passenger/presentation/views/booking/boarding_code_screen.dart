@@ -6,6 +6,8 @@ import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/bookings_data.dart';
+import '../../../data/passenger_data.dart';
 import '../../widgets/fake_qr_code.dart';
 
 /// PAS-11 · Mi código de abordaje (PIN y QR)
@@ -39,8 +41,9 @@ class BoardingCodeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.surface2,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,6 +99,7 @@ class _CodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BoardingCode code = BookingsData.boardingCode;
     return AppCard(
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 22, AppSpacing.lg, 20),
       child: Column(
@@ -111,7 +115,7 @@ class _CodeCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Mié 7 oct · 7:10 a. m. · auto BKL-482',
+            '${code.date} · ${code.time} · auto ${PassengerData.driver.plate}',
             textAlign: TextAlign.center,
             style: AppTypography.support,
           ),

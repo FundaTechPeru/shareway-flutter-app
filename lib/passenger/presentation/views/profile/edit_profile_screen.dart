@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/profile_data.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -36,22 +37,22 @@ class EditProfileScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xl),
                     Text('Nombre completo', style: AppTypography.label),
                     const SizedBox(height: 6),
-                    const _InputField(
-                      value: 'Lucía Paredes Rojas',
+                    _InputField(
+                      value: ProfileData.account.name,
                       icon: Icons.person_outline,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text('Correo', style: AppTypography.label),
                     const SizedBox(height: 6),
-                    const _InputField(
-                      value: 'lucia.paredes@correo.pe',
+                    _InputField(
+                      value: ProfileData.account.email,
                       icon: Icons.mail_outline,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text('Celular', style: AppTypography.label),
                     const SizedBox(height: 6),
-                    const _InputField(
-                      value: '+51 987 654 321',
+                    _InputField(
+                      value: ProfileData.account.phone,
                       icon: Icons.phone_outlined,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -120,9 +121,9 @@ class _PhotoSection extends StatelessWidget {
                   color: AppColors.accentSoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Text(
-                  'LP',
-                  style: TextStyle(
+                child: Text(
+                  ProfileData.account.initials,
+                  style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
                     color: AppColors.warning,

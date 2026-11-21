@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_progress_bar.dart';
+import '../../../data/passenger_data.dart';
 import '../../widgets/trip_map.dart';
 import '../booking/confirm_booking_screen.dart';
 import '../driver/driver_profile_screen.dart';
@@ -41,10 +42,7 @@ class TripDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const TripMap(
-                      height: 148,
-                      radius: 18,
-                    ),
+                    const TripMap(height: 148, radius: 18),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSpacing.screenMargin,
@@ -76,16 +74,15 @@ class TripDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'S/ 7.50',
-                        style: AppTypography.screenTitle.copyWith(
-                          fontSize: 24,
-                        ),
+                        PassengerData.tripDetail.price,
+                        style: AppTypography.screenTitle.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'precio estimado',
-                        style: AppTypography.label
-                            .copyWith(color: AppColors.ink3),
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.ink3,
+                        ),
                       ),
                     ],
                   ),
@@ -93,8 +90,9 @@ class TripDetailScreen extends StatelessWidget {
                   Expanded(
                     child: AppButton(
                       label: 'Reservar asiento',
-                      onPressed: () => Navigator.of(context)
-                          .pushNamed(ConfirmBookingScreen.routeName),
+                      onPressed: () =>
+                          Navigator.of(context)
+                              .pushNamed(ConfirmBookingScreen.routeName),
                     ),
                   ),
                 ],
@@ -112,30 +110,27 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TripDetail trip = PassengerData.tripDetail;
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Jue 8 oct · sale 7:10 a. m.',
+            trip.summary,
             style: AppTypography.support.copyWith(color: AppColors.ink3),
           ),
           const SizedBox(height: 6),
           Text(
-            'Lince → San Isidro',
+            trip.route,
             style: AppTypography.screenTitle.copyWith(fontSize: 21),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Row(
+          Row(
             children: [
-              Icon(Icons.schedule, size: 17, color: AppColors.ink2),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '28 min · 6.4 km · 2 paradas de recojo',
-                  style: AppTypography.support,
-                ),
-              ),
+              const Icon(Icons.schedule, size: 17, color: AppColors.ink2),
+              const SizedBox(width: 6),
+              Expanded(child: Text(trip.meta, style: AppTypography.support)),
             ],
           ),
         ],
@@ -147,8 +142,23 @@ class _SummaryCard extends StatelessWidget {
 class _PassengersCard extends StatelessWidget {
   const _PassengersCard();
 
+  /// Rondas de avatar: mismo ciclo de colores que el diseño original.
+  static const List<Color> _avatarBackgrounds = [
+    AppColors.primarySoft,
+    AppColors.accentSoft,
+    AppColors.surface2,
+  ];
+
+  static const List<Color> _avatarForegrounds = [
+    AppColors.primaryDark,
+    AppColors.warning,
+    AppColors.ink2,
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final PassengerGroup group = PassengerData.tripPassengers;
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +175,7 @@ class _PassengersCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '3 de 4',
+                '${group.confirmed} de ${group.total}',
                 style: AppTypography.highlightedData.copyWith(
                   color: AppColors.primary,
                 ),
@@ -173,27 +183,18 @@ class _PassengersCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          const AppProgressBar(value: 0.75),
+          AppProgressBar(value: group.progress),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              const _PassengerAvatar(
-                initials: 'AM',
-                background: AppColors.primarySoft,
-                foreground: AppColors.primaryDark,
-              ),
-              const SizedBox(width: 6),
-              const _PassengerAvatar(
-                initials: 'LT',
-                background: AppColors.accentSoft,
-                foreground: AppColors.warning,
-              ),
-              const SizedBox(width: 6),
-              const _PassengerAvatar(
-                initials: 'RC',
-                background: AppColors.surface2,
-                foreground: AppColors.ink2,
-              ),
+              for (int i = 0; i < group.initials.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                _PassengerAvatar(
+                  initials: group.initials[i],
+                  background: _avatarBackgrounds[i % _avatarBackgrounds.length],
+                  foreground: _avatarForegrounds[i % _avatarForegrounds.length],
+                ),
+              ],
               const SizedBox(width: 6),
               Container(
                 width: 34,
@@ -201,16 +202,9 @@ class _PassengersCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.borderStrong,
-                    width: 1.4,
-                  ),
+                  border: Border.all(color: AppColors.borderStrong, width: 1.4),
                 ),
-                child: const Icon(
-                  Icons.add,
-                  size: 18,
-                  color: AppColors.ink3,
-                ),
+                child: const Icon(Icons.add, size: 18, color: AppColors.ink3),
               ),
               const Spacer(),
               const Icon(
@@ -221,7 +215,7 @@ class _PassengersCard extends StatelessWidget {
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
-                  'Mínimo de 3 cumplido',
+                  group.minimumLabel,
                   style: AppTypography.support.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.success,
@@ -253,10 +247,7 @@ class _PassengerAvatar extends StatelessWidget {
       width: 34,
       height: 34,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
       child: Text(
         initials,
         style: TextStyle(
@@ -275,6 +266,8 @@ class _StopsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<TripStop> stops = PassengerData.tripDetail.stops;
+
     return AppCard(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -282,29 +275,24 @@ class _StopsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _StopItem(
-            dot: const _RingDot(color: AppColors.primary),
-            title: 'Av. Arequipa con Risso',
-            subtitle: 'Tu punto de recojo',
-            time: '7:10 a. m.',
-          ),
-          _StopItem(
-            dot: const _RingDot(color: AppColors.borderStrong),
-            title: 'Av. Arenales con Canevaro',
-            subtitle: 'Recojo de 1 pasajero',
-            time: '7:17 a. m.',
-          ),
-          const _StopItem(
-            dot: Icon(
-              Icons.location_on,
-              size: 24,
-              color: AppColors.accent,
+          for (int i = 0; i < stops.length; i++)
+            _StopItem(
+              dot: i == stops.length - 1
+                  ? const Icon(
+                      Icons.location_on,
+                      size: 24,
+                      color: AppColors.accent,
+                    )
+                  : _RingDot(
+                      color: i == 0
+                          ? AppColors.primary
+                          : AppColors.borderStrong,
+                    ),
+              title: stops[i].title,
+              subtitle: stops[i].subtitle,
+              time: stops[i].time,
+              last: i == stops.length - 1,
             ),
-            title: 'Av. Rivera Navarrete 501',
-            subtitle: 'Llegada a San Isidro',
-            time: '7:38 a. m.',
-            last: true,
-          ),
         ],
       ),
     );
@@ -338,12 +326,7 @@ class _StopItem extends StatelessWidget {
               children: [
                 dot,
                 if (!last)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: AppColors.border,
-                    ),
-                  ),
+                  Expanded(child: Container(width: 2, color: AppColors.border)),
               ],
             ),
           ),
@@ -366,16 +349,16 @@ class _StopItem extends StatelessWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       time,
-                      style: AppTypography.support
-                          .copyWith(color: AppColors.ink2),
+                      style: AppTypography.support.copyWith(
+                        color: AppColors.ink2,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: AppTypography.support
-                      .copyWith(color: AppColors.ink3),
+                  style: AppTypography.support.copyWith(color: AppColors.ink3),
                 ),
                 if (!last) const SizedBox(height: 18),
               ],
@@ -411,10 +394,12 @@ class _DriverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DriverProfile driver = PassengerData.driver;
+
     return AppCard(
       padding: const EdgeInsets.all(14),
-      onTap: () => Navigator.of(context)
-          .pushNamed(DriverProfileScreen.routeName),
+      onTap: () =>
+          Navigator.of(context).pushNamed(DriverProfileScreen.routeName),
       child: Row(
         children: [
           Container(
@@ -425,9 +410,9 @@ class _DriverCard extends StatelessWidget {
               color: AppColors.primarySoft,
               shape: BoxShape.circle,
             ),
-            child: const Text(
-              'CH',
-              style: TextStyle(
+            child: Text(
+              driver.initials,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryDark,
@@ -442,7 +427,7 @@ class _DriverCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Carlos Huamán',
+                      driver.name,
                       style: AppTypography.body.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -458,13 +443,14 @@ class _DriverCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.star, size: 15, color: AppColors.accent),
-                    SizedBox(width: 4),
+                    const Icon(Icons.star, size: 15, color: AppColors.accent),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        '4.8 · Toyota Yaris gris · BKL-482',
+                        '${driver.rating} · ${driver.vehicleShort} · '
+                        '${driver.plate}',
                         style: AppTypography.support,
                       ),
                     ),

@@ -1,16 +1,45 @@
 import 'package:flutter/material.dart';
 
+import '../../../repositories/payment_repository.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/bookings_data.dart';
 import '../../passenger_shell.dart';
 
 /// PAS-16 · Recibo del viaje
-class TripReceiptScreen extends StatelessWidget {
+class TripReceiptScreen extends StatefulWidget {
   const TripReceiptScreen({super.key});
 
   static const String routeName = '/passenger/receipt';
+
+  @override
+  State<TripReceiptScreen> createState() => _TripReceiptScreenState();
+}
+
+class _TripReceiptScreenState extends State<TripReceiptScreen> {
+  final PaymentRepository _paymentRepository = PaymentRepository();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic> && args['paymentId'] != null) {
+      _loadPayment(args['paymentId'].toString());
+    }
+  }
+
+  Future<void> _loadPayment(String paymentId) async {
+    try {
+      await _paymentRepository.getPaymentDetail(paymentId);
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (_) {
+      if (mounted) {}
+    }
+  }
 
   void _goHome(BuildContext context) {
     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -59,8 +88,7 @@ class TripReceiptScreen extends StatelessWidget {
                   foregroundColor: AppColors.ink,
                   side: const BorderSide(color: AppColors.border),
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusPill),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   ),
                   textStyle: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
@@ -95,6 +123,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ReceiptSummary summary = BookingsData.receipt.summary;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,14 +133,14 @@ class _SummaryCard extends StatelessWidget {
               _DoneBadge(),
               Spacer(),
               Text(
-                'Mié 7 oct 2026',
+                summary.date,
                 style: AppTypography.support.copyWith(color: AppColors.ink3),
               ),
             ],
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            'Lince → San Isidro',
+            summary.route,
             style: AppTypography.highlightedData.copyWith(fontSize: 21),
           ),
           SizedBox(height: AppSpacing.sm),
@@ -120,10 +149,7 @@ class _SummaryCard extends StatelessWidget {
               Icon(Icons.schedule, size: 17, color: AppColors.ink2),
               SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  '7:10 a 7:38 a. m. · 28 min · 6.4 km',
-                  style: AppTypography.support,
-                ),
+                child: Text(summary.schedule, style: AppTypography.support),
               ),
             ],
           ),
@@ -168,16 +194,16 @@ class _BreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final PriceBreakdown breakdown = BookingsData.receipt.breakdown;
     return AppCard(
       child: Column(
         children: [
-          _Row(label: 'Tarifa base', value: 'S/ 3.00'),
-          _Row(label: 'Distancia (6.4 km)', value: 'S/ 5.20'),
-          _Row(
-            label: 'Ahorro por compartir',
-            value: '− S/ 0.70',
-            valueColor: AppColors.success,
-          ),
+          for (final PriceLine line in breakdown.lines)
+            _Row(
+              label: line.label,
+              value: line.value,
+              valueColor: line.discount ? AppColors.success : AppColors.ink,
+            ),
           SizedBox(height: AppSpacing.md),
           Divider(),
           SizedBox(height: AppSpacing.md),
@@ -185,7 +211,7 @@ class _BreakdownCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Total cobrado',
+                  breakdown.totalLabel,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -193,7 +219,7 @@ class _BreakdownCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'S/ 7.50',
+                breakdown.total,
                 style: AppTypography.highlightedData.copyWith(fontSize: 21),
               ),
             ],
@@ -207,7 +233,7 @@ class _BreakdownCard extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Visa •••• 4821',
+                  BookingsData.receipt.payment.brand,
                   style: AppTypography.support.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.ink,
@@ -215,7 +241,7 @@ class _BreakdownCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Pagado',
+                BookingsData.receipt.payment.status,
                 style: AppTypography.support.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.success,
@@ -270,15 +296,15 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+    final List<LabeledValue> meta = BookingsData.receipt.meta;
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         children: [
-          _MetaRow(label: 'N.° de viaje', value: 'SW-58213'),
-          Divider(),
-          _MetaRow(label: 'Conductor', value: 'Carlos Huamán'),
-          Divider(),
-          _MetaRow(label: 'Vehículo', value: 'Toyota Yaris · BKL-482'),
+          for (int i = 0; i < meta.length; i++) ...[
+            if (i > 0) const Divider(),
+            _MetaRow(label: meta[i].label, value: meta[i].value),
+          ],
         ],
       ),
     );

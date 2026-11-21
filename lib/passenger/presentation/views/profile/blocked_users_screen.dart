@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/profile_data.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -31,25 +32,13 @@ class BlockedUsersScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             AppCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
-                children: const [
-                  _BlockedRow(
-                    initials: 'LT',
-                    name: 'Luis T.',
-                    meta: 'Pasajero · desde el 2 oct',
-                    background: AppColors.primarySoft,
-                    foreground: AppColors.primaryDark,
-                  ),
-                  Divider(),
-                  _BlockedRow(
-                    initials: 'MD',
-                    name: 'Marco D.',
-                    meta: 'Conductor · desde el 14 sep',
-                    background: AppColors.accentSoft,
-                    foreground: AppColors.warning,
-                  ),
+                children: [
+                  for (var i = 0; i < ProfileData.blockedUsers.length; i++) ...[
+                    if (i > 0) const Divider(),
+                    _BlockedRow(user: ProfileData.blockedUsers[i]),
+                  ],
                 ],
               ),
             ),
@@ -126,19 +115,9 @@ class BlockedUsersScreen extends StatelessWidget {
 }
 
 class _BlockedRow extends StatelessWidget {
-  const _BlockedRow({
-    required this.initials,
-    required this.name,
-    required this.meta,
-    required this.background,
-    required this.foreground,
-  });
+  const _BlockedRow({required this.user});
 
-  final String initials;
-  final String name;
-  final String meta;
-  final Color background;
-  final Color foreground;
+  final BlockedUser user;
 
   @override
   Widget build(BuildContext context) {
@@ -150,14 +129,17 @@ class _BlockedRow extends StatelessWidget {
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: user.background,
+              shape: BoxShape.circle,
+            ),
             child: Text(
-              initials,
+              user.initials,
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: foreground,
+                color: user.foreground,
               ),
             ),
           ),
@@ -167,14 +149,14 @@ class _BlockedRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  user.name,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(meta, style: AppTypography.support),
+                Text(user.meta, style: AppTypography.support),
               ],
             ),
           ),

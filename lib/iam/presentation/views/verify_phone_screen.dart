@@ -25,9 +25,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   void _verify() {
     if (_code.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresa los 6 dígitos del código.'),
-        ),
+        const SnackBar(content: Text('Ingresa los 6 dígitos del código.')),
       );
       return;
     }
@@ -61,8 +59,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                     Text(
                       'Enviamos un código de 6 dígitos por SMS al '
                       '+51 987 654 321.',
-                      style:
-                          AppTypography.body.copyWith(color: AppColors.ink2),
+                      style: AppTypography.body.copyWith(color: AppColors.ink2),
                     ),
                     const SizedBox(height: 28),
                     AppOtpField(
@@ -72,11 +69,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                     const SizedBox(height: 20),
                     const Row(
                       children: [
-                        Icon(
-                          Icons.schedule,
-                          size: 18,
-                          color: AppColors.ink2,
-                        ),
+                        Icon(Icons.schedule, size: 18, color: AppColors.ink2),
                         SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
@@ -92,7 +85,8 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                     const AppInfoCard(
                       icon: Icons.shield_outlined,
                       title: '¿Por qué lo pedimos?',
-                      message: 'Tu celular nos permite avisarte de cambios '
+                      message:
+                          'Tu celular nos permite avisarte de cambios '
                           'en el viaje y proteger tu cuenta.',
                     ),
                   ],

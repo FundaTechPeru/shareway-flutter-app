@@ -4,8 +4,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../emergency/emergency_alert_screen.dart';
-import '../emergency/live_tracking_screen.dart';
+import '../../../data/passenger_data.dart';
 
 /// Pestaña "Avisos" del pasajero.
 ///
@@ -22,65 +21,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// Ids de los avisos que el usuario ya abrió.
   final Set<int> _read = {3};
 
-  static const List<_Notification> _today = [
-    _Notification(
-      id: 5,
-      icon: Icons.error_outline,
-      tone: _Tone.error,
-      title: 'Carlos activó una alerta',
-      body:
-          'Viaje SW-58213 · Av. Arenales 1250, Lince. '
-          'Ubicación en vivo disponible.',
-      time: 'hace 1 min',
-      route: EmergencyAlertScreen.routeName,
-    ),
-    _Notification(
-      id: 0,
-      icon: Icons.directions_car_outlined,
-      tone: _Tone.primary,
-      title: 'Tu conductor va en camino',
-      body: 'Carlos H. saldrá en 10 minutos desde Av. Arequipa con Risso.',
-      time: 'hace 5 min',
-      route: LiveTrackingScreen.routeName,
-    ),
-    _Notification(
-      id: 1,
-      icon: Icons.check_circle_outline,
-      tone: _Tone.success,
-      title: 'Reserva confirmada',
-      body: 'Jue 8 oct · Lince a San Isidro · 7:10 a. m. · S/ 7.50.',
-      time: 'hace 2 h',
-    ),
-  ];
-
-  static const List<_Notification> _earlier = [
-    _Notification(
-      id: 2,
-      icon: Icons.star_outline,
-      tone: _Tone.accent,
-      title: 'Califica tu viaje de ayer',
-      body: 'Tienes 48 horas para puntuar a Carlos H.',
-      time: 'ayer',
-    ),
-    _Notification(
-      id: 3,
-      icon: Icons.repeat,
-      tone: _Tone.primary,
-      title: 'Tu viaje recurrente está activo',
-      body: 'Crearemos la solicitud de la próxima semana el lunes.',
-      time: '2 oct',
-    ),
-    _Notification(
-      id: 4,
-      icon: Icons.credit_card,
-      tone: _Tone.neutral,
-      title: 'Pago aprobado',
-      body: 'Cobramos S/ 7.50 a tu Visa •••• 4821.',
-      time: '2 oct',
-    ),
-  ];
-
-  void _open(_Notification notification) {
+  void _open(AppNotification notification) {
     setState(() => _read.add(notification.id));
     final String? route = notification.route;
     if (route != null && mounted) {
@@ -90,7 +31,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool allRead = _read.length >= _today.length + _earlier.length;
+    final List<NotificationGroup> groups = PassengerData.notificationGroups;
+    final int totalCount = groups
+        .expand((NotificationGroup group) => group.items)
+        .length;
+    final bool allRead = _read.length >= totalCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -111,11 +56,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 if (!allRead)
                   TextButton(
                     onPressed: () => setState(() {
-                      for (final _Notification item in [
-                        ..._today,
-                        ..._earlier,
-                      ]) {
-                        _read.add(item.id);
+                      for (final NotificationGroup group in groups) {
+                        for (final AppNotification item in group.items) {
+                          _read.add(item.id);
+                        }
                       }
                     }),
                     style: TextButton.styleFrom(
@@ -131,24 +75,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            const _SectionLabel('Hoy'),
-            for (final _Notification item in _today) ...[
-              _NotificationCard(
-                notification: item,
-                unread: !_read.contains(item.id),
-                onTap: () => _open(item),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            const SizedBox(height: AppSpacing.sm),
-            const _SectionLabel('Anteriores'),
-            for (final _Notification item in _earlier) ...[
-              _NotificationCard(
-                notification: item,
-                unread: !_read.contains(item.id),
-                onTap: () => _open(item),
-              ),
-              const SizedBox(height: AppSpacing.md),
+            for (int g = 0; g < groups.length; g++) ...[
+              if (g > 0) const SizedBox(height: AppSpacing.sm),
+              _SectionLabel(groups[g].label),
+              for (final AppNotification item in groups[g].items) ...[
+                _NotificationCard(
+                  notification: item,
+                  unread: !_read.contains(item.id),
+                  onTap: () => _open(item),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
             ],
           ],
         ),
@@ -178,30 +115,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-enum _Tone { primary, success, accent, neutral, error }
-
-class _Notification {
-  const _Notification({
-    required this.id,
-    required this.icon,
-    required this.tone,
-    required this.title,
-    required this.body,
-    required this.time,
-    this.route,
-  });
-
-  final int id;
-  final IconData icon;
-  final _Tone tone;
-  final String title;
-  final String body;
-  final String time;
-
-  /// Ruta a abrir al tocar el aviso, si corresponde.
-  final String? route;
-}
-
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.notification,
@@ -209,28 +122,39 @@ class _NotificationCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final _Notification notification;
+  final AppNotification notification;
   final bool unread;
   final VoidCallback onTap;
 
-  (Color background, Color foreground) get _palette {
-    switch (notification.tone) {
-      case _Tone.primary:
-        return (AppColors.primarySoft, AppColors.primary);
-      case _Tone.success:
-        return (AppColors.successSoft, AppColors.success);
-      case _Tone.accent:
-        return (AppColors.accentSoft, AppColors.warning);
-      case _Tone.neutral:
-        return (AppColors.surface2, AppColors.ink2);
-      case _Tone.error:
-        return (AppColors.errorSoft, AppColors.error);
+  /// Icono y colores que corresponden al tipo del aviso.
+  (IconData icon, Color background, Color foreground) get _style {
+    switch (notification.type) {
+      case NotificationType.tripOnWay:
+        return (
+          Icons.directions_car_outlined,
+          AppColors.primarySoft,
+          AppColors.primary,
+        );
+      case NotificationType.bookingConfirmed:
+        return (
+          Icons.check_circle_outline,
+          AppColors.successSoft,
+          AppColors.success,
+        );
+      case NotificationType.rating:
+        return (Icons.star_outline, AppColors.accentSoft, AppColors.warning);
+      case NotificationType.recurring:
+        return (Icons.repeat, AppColors.primarySoft, AppColors.primary);
+      case NotificationType.payment:
+        return (Icons.credit_card, AppColors.surface2, AppColors.ink2);
+      case NotificationType.emergency:
+        return (Icons.error_outline, AppColors.errorSoft, AppColors.error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final (Color background, Color foreground) = _palette;
+    final (IconData icon, Color background, Color foreground) = _style;
 
     return AppCard(
       padding: const EdgeInsets.all(14),
@@ -247,7 +171,7 @@ class _NotificationCard extends StatelessWidget {
               color: background,
               shape: BoxShape.circle,
             ),
-            child: Icon(notification.icon, size: 21, color: foreground),
+            child: Icon(icon, size: 21, color: foreground),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../repositories/trip_request_repository.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -7,6 +9,7 @@ import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../data/trips_extra_data.dart';
 import 'search_results_screen.dart';
 
 /// PAS-02 · Buscar viaje
@@ -22,15 +25,62 @@ class SearchTripScreen extends StatefulWidget {
 class _SearchTripScreenState extends State<SearchTripScreen> {
   static const List<String> _days = ['Hoy', 'Mañana', 'Jue 8', 'Vie 9'];
 
-  int _day = 2;
-  int _seats = 1;
+  final TripRequestRepository _tripRequestRepository = TripRequestRepository();
 
-  void _search() {
-    Navigator.of(context).pushNamed(SearchResultsScreen.routeName);
+  int _day = 0;
+  int _seats = 1;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _search() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final now = DateTime.now();
+      final travelDate = now
+          .add(Duration(days: _day))
+          .toIso8601String()
+          .split('T')[0];
+
+      final request = await _tripRequestRepository.createTripRequest(
+        originLabel: TripsExtraData.searchForm.route.origin,
+        destinationLabel: TripsExtraData.searchForm.route.destination,
+        travelDate: travelDate,
+        earliestDeparture: '07:00:00',
+        latestDeparture: '08:00:00',
+        seatsRequested: _seats,
+      );
+
+      final proposals = await _tripRequestRepository.generateMatchProposals(
+        request.id,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pushNamed(
+        SearchResultsScreen.routeName,
+        arguments: {'requestId': request.id, 'proposals': proposals},
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e is ApiException
+            ? e.message
+            : 'Error al buscar viajes. Intenta nuevamente.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final SearchFormDefaults form = TripsExtraData.searchForm;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Buscar viaje')),
@@ -66,14 +116,17 @@ class _SearchTripScreenState extends State<SearchTripScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     const SectionHeader(title: 'Rango horario'),
-                    const Row(
+                    Row(
                       children: [
                         Expanded(
-                          child: _TimeField(label: 'Desde', value: '7:00 a. m.'),
+                          child: _TimeField(
+                            label: 'Desde',
+                            value: form.fromTime,
+                          ),
                         ),
-                        SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: _TimeField(label: 'Hasta', value: '8:00 a. m.'),
+                          child: _TimeField(label: 'Hasta', value: form.toTime),
                         ),
                       ],
                     ),
@@ -131,16 +184,31 @@ class _SearchTripScreenState extends State<SearchTripScreen> {
                         ],
                       ),
                     ),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorSoft,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: AppTypography.support.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     const SectionHeader(title: 'Búsquedas recientes'),
-                    const _RecentSearch(
-                      title: 'Lince → San Isidro',
-                      subtitle: 'Lun a vie · 7:00 a 8:00 a. m.',
-                    ),
-                    const _RecentSearch(
-                      title: 'Lince → Monterrico',
-                      subtitle: 'Sábado · 8:30 a 9:30 a. m.',
-                    ),
+                    for (final RecentSearch search
+                        in TripsExtraData.recentSearches)
+                      _RecentSearch(
+                        title: search.title,
+                        subtitle: search.subtitle,
+                      ),
                   ],
                 ),
               ),
@@ -149,7 +217,8 @@ class _SearchTripScreenState extends State<SearchTripScreen> {
               child: AppButton(
                 label: 'Buscar viajes',
                 icon: Icons.search,
-                onPressed: _search,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _search,
               ),
             ),
           ],
@@ -172,25 +241,25 @@ class _RoutePickerCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 _EndPoint(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.radio_button_unchecked,
                     size: 20,
                     color: AppColors.primary,
                   ),
                   label: 'Origen',
-                  value: 'Av. Arequipa 2450, Lince',
+                  value: TripsExtraData.searchForm.route.origin,
                 ),
-                _DashedConnector(),
+                const _DashedConnector(),
                 _EndPoint(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.location_on,
                     size: 21,
                     color: AppColors.warning,
                   ),
                   label: 'Destino',
-                  value: 'C. E. Real, San Isidro',
+                  value: TripsExtraData.searchForm.route.destination,
                 ),
               ],
             ),
@@ -362,11 +431,7 @@ class _TimeField extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.schedule,
-                size: 19,
-                color: AppColors.ink2,
-              ),
+              const Icon(Icons.schedule, size: 19, color: AppColors.ink2),
               const SizedBox(width: 10),
               Text(value, style: AppTypography.body),
             ],
@@ -378,11 +443,7 @@ class _TimeField extends StatelessWidget {
 }
 
 class _StepButton extends StatelessWidget {
-  const _StepButton({
-    required this.icon,
-    required this.filled,
-    this.onPressed,
-  });
+  const _StepButton({required this.icon, required this.filled, this.onPressed});
 
   final IconData icon;
   final bool filled;
@@ -400,9 +461,7 @@ class _StepButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints.tightFor(width: 40, height: 40),
         style: IconButton.styleFrom(
-          backgroundColor: filled
-              ? AppColors.primarySoft
-              : AppColors.surface,
+          backgroundColor: filled ? AppColors.primarySoft : AppColors.surface,
           foregroundColor: enabled
               ? (filled ? AppColors.primary : AppColors.ink2)
               : AppColors.border,
@@ -432,11 +491,7 @@ class _RecentSearch extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.schedule,
-              size: 20,
-              color: AppColors.ink3,
-            ),
+            child: Icon(Icons.schedule, size: 20, color: AppColors.ink3),
           ),
           const SizedBox(width: 12),
           Expanded(

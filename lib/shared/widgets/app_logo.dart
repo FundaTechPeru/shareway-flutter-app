@@ -7,11 +7,7 @@ import '../theme/app_colors.dart';
 /// Usa [onDark] cuando se coloca sobre el fondo primario (splash), para que
 /// el cuadrado sea blanco. Sobre fondo claro el cuadrado es primario.
 class AppLogo extends StatelessWidget {
-  const AppLogo({
-    super.key,
-    this.size = 56,
-    this.onDark = false,
-  });
+  const AppLogo({super.key, this.size = 56, this.onDark = false});
 
   final double size;
   final bool onDark;
@@ -85,8 +81,7 @@ class AppBrand extends StatelessWidget {
             fontSize: size * 0.5,
             height: 1,
             fontWeight: FontWeight.w700,
-            color: textColor ??
-                (onDark ? Colors.white : AppColors.primaryDark),
+            color: textColor ?? (onDark ? Colors.white : AppColors.primaryDark),
           ),
         ),
       ],

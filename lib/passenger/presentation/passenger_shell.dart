@@ -89,11 +89,7 @@ class _NavItem {
 }
 
 const List<_NavItem> _items = [
-  _NavItem(
-    label: 'Inicio',
-    icon: Icons.home_outlined,
-    activeIcon: Icons.home,
-  ),
+  _NavItem(label: 'Inicio', icon: Icons.home_outlined, activeIcon: Icons.home),
   _NavItem(
     label: 'Mis viajes',
     icon: Icons.list_alt_outlined,
@@ -112,10 +108,7 @@ const List<_NavItem> _items = [
 ];
 
 class _PassengerNavBar extends StatelessWidget {
-  const _PassengerNavBar({
-    required this.index,
-    required this.onChanged,
-  });
+  const _PassengerNavBar({required this.index, required this.onChanged});
 
   final int index;
   final ValueChanged<int> onChanged;
@@ -162,8 +155,7 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color foreground =
-        selected ? AppColors.primary : AppColors.ink3;
+    final Color foreground = selected ? AppColors.primary : AppColors.ink3;
 
     return InkWell(
       onTap: onTap,
@@ -173,9 +165,7 @@ class _NavBarItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
             decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primarySoft
-                  : Colors.transparent,
+              color: selected ? AppColors.primarySoft : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(

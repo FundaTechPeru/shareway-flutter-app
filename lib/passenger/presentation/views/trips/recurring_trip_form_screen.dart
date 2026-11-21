@@ -6,6 +6,7 @@ import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/trips_extra_data.dart';
 
 /// PAS-17 · Programar viaje recurrente
 class RecurringTripFormScreen extends StatefulWidget {
@@ -28,14 +29,15 @@ class _RecurringTripFormScreenState extends State<RecurringTripFormScreen> {
       _days.length == 5 && _days.containsAll(const {0, 1, 2, 3, 4});
 
   void _save() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Programación guardada.')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Programación guardada.')));
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final RecurringFormDefaults form = TripsExtraData.recurringForm;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Viaje recurrente')),
@@ -79,18 +81,26 @@ class _RecurringTripFormScreenState extends State<RecurringTripFormScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      _weekdaysOnly ? 'De lunes a viernes' : 'Días seleccionados',
+                      _weekdaysOnly
+                          ? 'De lunes a viernes'
+                          : 'Días seleccionados',
                       style: AppTypography.support,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    const Row(
+                    Row(
                       children: [
                         Expanded(
-                          child: _TimeField(label: 'Salir desde', value: '7:00 a. m.'),
+                          child: _TimeField(
+                            label: 'Salir desde',
+                            value: form.departureTime,
+                          ),
                         ),
-                        SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: _TimeField(label: 'Hasta', value: '8:00 a. m.'),
+                          child: _TimeField(
+                            label: 'Hasta',
+                            value: form.arrivalTime,
+                          ),
                         ),
                       ],
                     ),
@@ -108,25 +118,26 @@ class _RecurringTripFormScreenState extends State<RecurringTripFormScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusSm),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusSm,
+                        ),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.calendar_month_outlined,
                             size: 20,
                             color: AppColors.ink2,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Lunes 12 de octubre',
+                              form.startDate,
                               style: AppTypography.body,
                             ),
                           ),
-                          Icon(
+                          const Icon(
                             Icons.keyboard_arrow_down,
                             size: 22,
                             color: AppColors.ink2,
@@ -140,13 +151,18 @@ class _RecurringTripFormScreenState extends State<RecurringTripFormScreen> {
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.primarySoft,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.repeat, size: 20, color: AppColors.primary),
+                          Icon(
+                            Icons.repeat,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -178,10 +194,7 @@ class _RecurringTripFormScreenState extends State<RecurringTripFormScreen> {
               ),
             ),
             AppBottomBar(
-              child: AppButton(
-                label: 'Guardar programación',
-                onPressed: _save,
-              ),
+              child: AppButton(label: 'Guardar programación', onPressed: _save),
             ),
           ],
         ),
@@ -195,6 +208,8 @@ class _RouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TripRoute route = TripsExtraData.recurringForm.route;
+
     return AppCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,7 +221,7 @@ class _RouteCard extends StatelessWidget {
                 const Text('Origen', style: AppTypography.label),
                 const SizedBox(height: 3),
                 Text(
-                  'Av. Arequipa 2450, Lince',
+                  route.origin,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -218,7 +233,7 @@ class _RouteCard extends StatelessWidget {
                 const Text('Destino', style: AppTypography.label),
                 const SizedBox(height: 3),
                 Text(
-                  'C. E. Real, San Isidro',
+                  route.destination,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -230,7 +245,11 @@ class _RouteCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           const Column(
             children: [
-              Icon(Icons.radio_button_unchecked, size: 20, color: AppColors.primary),
+              Icon(
+                Icons.radio_button_unchecked,
+                size: 20,
+                color: AppColors.primary,
+              ),
               SizedBox(height: 4),
               Icon(Icons.arrow_downward, size: 15, color: AppColors.ink3),
               SizedBox(height: 4),

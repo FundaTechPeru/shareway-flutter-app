@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../models/fare_models.dart';
+import '../../../repositories/booking_repository.dart';
+import '../../../repositories/fare_repository.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
@@ -7,14 +12,12 @@ import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../data/bookings_data.dart';
 import '../errors/seat_unavailable_dialog.dart';
-import 'booking_success_screen.dart';
+import 'booking_detail_screen.dart';
 import 'payment_methods_screen.dart';
 
 /// PAS-05 · Confirmar reserva y pago
-///
-/// Con [seatUnavailable] muestra el diálogo de error PAS-E3 (el viaje se
-/// quedó sin asientos) al abrir la pantalla.
 class ConfirmBookingScreen extends StatefulWidget {
   const ConfirmBookingScreen({super.key, this.seatUnavailable = false});
 
@@ -28,9 +31,21 @@ class ConfirmBookingScreen extends StatefulWidget {
 }
 
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
+  final FareRepository _fareRepository = FareRepository();
+  final BookingRepository _bookingRepository = BookingRepository();
+
+  String _groupId = 'grp_demo_123';
+  String _requestId = 'req_demo_123';
+  FareEstimate? _fareEstimate;
+  bool _isLoadingFare = false;
+  bool _isReserving = false;
+  String? _errorMessage;
+  String? _idempotencyKey;
+
   @override
   void initState() {
     super.initState();
+    _idempotencyKey = const Uuid().v4();
     if (widget.seatUnavailable) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) showSeatUnavailableDialog(context);
@@ -39,7 +54,91 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      if (args['groupId'] != null) _groupId = args['groupId'].toString();
+      if (args['requestId'] != null) _requestId = args['requestId'].toString();
+      if (_fareEstimate == null && !_isLoadingFare) {
+        _fetchFareEstimate();
+      }
+    }
+  }
+
+  Future<void> _fetchFareEstimate() async {
+    setState(() {
+      _isLoadingFare = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final fare = await _fareRepository.getFareEstimate(_groupId);
+      if (mounted) {
+        setState(() {
+          _fareEstimate = fare;
+          _isLoadingFare = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          // Si no hay estimador remoto, fallback a tarifa predeterminada
+          _fareEstimate = const FareEstimate(amount: 7.50, currency: 'S/');
+          _isLoadingFare = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmBooking() async {
+    setState(() {
+      _isReserving = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final booking = await _bookingRepository.createBooking(
+        groupId: _groupId,
+        requestId: _requestId,
+        idempotencyKey: _idempotencyKey,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        BookingDetailScreen.routeName,
+        arguments: {
+          'bookingId': booking.bookingId,
+          'status': booking.rawStatus,
+        },
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.isConflict) {
+        showSeatUnavailableDialog(context);
+      } else {
+        setState(() {
+          _errorMessage = e.message;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'No se pudo completar la reserva. Reintente.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isReserving = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final fareText = _fareEstimate != null
+        ? _fareEstimate!.formattedPrice
+        : BookingsData.confirmPrice.total;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Confirmar reserva')),
@@ -62,13 +161,35 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     const _TripSummary(),
                     const SizedBox(height: AppSpacing.xl),
                     const SectionHeader(title: 'Precio estimado'),
-                    const _PriceCard(),
+                    if (_isLoadingFare)
+                      const AppCard(
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      const _PriceCard(),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorSoft,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: AppTypography.support.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     const SectionHeader(title: 'Pago'),
                     _PaymentRow(
-                      onChange: () => Navigator.of(context).pushNamed(
-                        PaymentMethodsScreen.routeName,
-                      ),
+                      onChange: () =>
+                          Navigator.of(context)
+                              .pushNamed(PaymentMethodsScreen.routeName),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     const Row(
@@ -103,11 +224,10 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             ),
             AppBottomBar(
               child: AppButton(
-                label: 'Confirmar y pagar S/ 7.50',
+                label: 'Confirmar y pagar $fareText',
                 icon: Icons.lock_outline,
-                onPressed: () => Navigator.of(context).pushNamed(
-                  BookingSuccessScreen.routeName,
-                ),
+                isLoading: _isReserving,
+                onPressed: _isReserving ? null : _confirmBooking,
               ),
             ),
           ],
@@ -172,31 +292,28 @@ class _TripSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TripSummary trip = BookingsData.confirmTrip;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Jue 8 oct · sale 7:10 a. m.',
+            trip.schedule,
             style: AppTypography.support.copyWith(color: AppColors.ink3),
           ),
           SizedBox(height: 5),
           Text(
-            'Lince → San Isidro',
+            trip.route,
             style: AppTypography.highlightedData.copyWith(fontSize: 21),
           ),
           SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              Icon(
-                Icons.location_on,
-                size: 17,
-                color: AppColors.warning,
-              ),
+              Icon(Icons.location_on, size: 17, color: AppColors.warning),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Recojo: Av. Arequipa con Risso',
+                  'Recojo: ${trip.pickup}',
                   style: AppTypography.support,
                 ),
               ),
@@ -213,16 +330,16 @@ class _PriceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final PriceBreakdown price = BookingsData.confirmPrice;
     return AppCard(
       child: Column(
         children: [
-          _PriceRow(label: 'Tarifa base', value: 'S/ 3.00'),
-          _PriceRow(label: 'Distancia (6.4 km)', value: 'S/ 5.20'),
-          _PriceRow(
-            label: 'Ahorro por compartir',
-            value: '− S/ 0.70',
-            valueColor: AppColors.success,
-          ),
+          for (final PriceLine line in price.lines)
+            _PriceRow(
+              label: line.label,
+              value: line.value,
+              valueColor: line.discount ? AppColors.success : AppColors.ink,
+            ),
           SizedBox(height: AppSpacing.md),
           Divider(),
           SizedBox(height: AppSpacing.md),
@@ -230,7 +347,7 @@ class _PriceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Total por 1 asiento',
+                  price.totalLabel,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.ink,
@@ -238,7 +355,7 @@ class _PriceCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'S/ 7.50',
+                price.total,
                 style: AppTypography.highlightedData.copyWith(fontSize: 21),
               ),
             ],
@@ -269,9 +386,7 @@ class _PriceRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: AppTypography.body.copyWith(
-                color: AppColors.ink2,
-              ),
+              style: AppTypography.body.copyWith(color: AppColors.ink2),
             ),
           ),
           Text(
@@ -294,6 +409,7 @@ class _PaymentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final PaymentMethod payment = BookingsData.paymentMethod;
     return AppCard(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -318,17 +434,14 @@ class _PaymentRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Visa •••• 4821',
+                  payment.brand,
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
                 SizedBox(height: 2),
-                Text(
-                  'Se cobra al terminar el viaje',
-                  style: AppTypography.support,
-                ),
+                Text(payment.note, style: AppTypography.support),
               ],
             ),
           ),

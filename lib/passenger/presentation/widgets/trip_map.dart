@@ -43,10 +43,7 @@ class TripMap extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primary,
-                        width: 4,
-                      ),
+                      border: Border.all(color: AppColors.primary, width: 4),
                     ),
                   ),
                 ),
@@ -99,10 +96,7 @@ class _TripMapPainter extends CustomPainter {
     final double h = size.height;
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Offset.zero & size,
-        const Radius.circular(18),
-      ),
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(18)),
       Paint()..color = AppColors.surface2,
     );
 

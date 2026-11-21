@@ -6,6 +6,7 @@ import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/bookings_data.dart';
 import '../../passenger_shell.dart';
 
 /// PAS-06 · Reserva confirmada
@@ -75,7 +76,7 @@ class BookingSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
-                      'Jue 8 oct · 7:10 a. m.',
+                      BookingsData.bookingSuccess.schedule,
                       textAlign: TextAlign.center,
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w600,
@@ -84,10 +85,9 @@ class BookingSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Lince → San Isidro',
+                      BookingsData.bookingSuccess.route,
                       textAlign: TextAlign.center,
-                      style: AppTypography.body
-                          .copyWith(color: AppColors.ink2),
+                      style: AppTypography.body.copyWith(color: AppColors.ink2),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     AppCard(
@@ -113,8 +113,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           const _InfoRow(
                             icon: Icons.schedule,
                             title: 'Cancela sin penalidad',
-                            subtitle:
-                                'Hasta 30 minutos antes de la salida',
+                            subtitle: 'Hasta 30 minutos antes de la salida',
                           ),
                         ],
                       ),

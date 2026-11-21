@@ -6,6 +6,7 @@ import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../data/passenger_data.dart';
 
 /// PAS-10 · Perfil del conductor
 class DriverProfileScreen extends StatelessWidget {
@@ -29,20 +30,20 @@ class DriverProfileScreen extends StatelessWidget {
           children: [
             const _IdentityCard(),
             const SizedBox(height: AppSpacing.md),
-            const Row(
+            Row(
               children: [
                 Expanded(
                   child: _StatCard(
                     icon: Icons.star_outline,
-                    value: '4.8',
+                    value: PassengerData.driver.rating,
                     label: 'Calificación promedio',
                   ),
                 ),
-                SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _StatCard(
                     icon: Icons.swap_horiz,
-                    value: '312',
+                    value: PassengerData.driver.tripsCount,
                     label: 'Viajes realizados',
                   ),
                 ),
@@ -69,7 +70,7 @@ class _IdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
+    return AppCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -77,42 +78,39 @@ class _IdentityCard extends StatelessWidget {
             radius: 32,
             backgroundColor: AppColors.primarySoft,
             child: Text(
-              'CH',
-              style: TextStyle(
+              PassengerData.driver.initials,
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryDark,
               ),
             ),
           ),
-          SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Carlos Huamán',
-                  style: TextStyle(
+                  PassengerData.driver.name,
+                  style: const TextStyle(
                     fontSize: 24,
                     height: 1.2,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 8),
-                AppBadge(
+                const SizedBox(height: 8),
+                const AppBadge(
                   label: 'Documentos verificados',
                   tone: AppBadgeTone.success,
                   icon: Icons.verified_outlined,
                   dense: true,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'En ShareWay desde agosto de 2025',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.ink2,
-                  ),
+                  PassengerData.driver.memberSince,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink2),
                 ),
               ],
             ),
@@ -158,15 +156,15 @@ class _StatCard extends StatelessWidget {
 class _DocumentsCard extends StatelessWidget {
   const _DocumentsCard();
 
-  static const List<String> _docs = ['Brevete', 'SOAT', 'Tarjeta de propiedad'];
-
   @override
   Widget build(BuildContext context) {
+    final List<String> documents = PassengerData.driver.documents;
+
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Column(
         children: [
-          for (int i = 0; i < _docs.length; i++) ...[
+          for (int i = 0; i < documents.length; i++) ...[
             if (i > 0) const Divider(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 15),
@@ -180,7 +178,7 @@ class _DocumentsCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
-                      _docs[i],
+                      documents[i],
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w500,
                         color: AppColors.ink,
@@ -208,32 +206,32 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
-      padding: EdgeInsets.all(AppSpacing.lg),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.directions_car_outlined,
             size: 26,
             color: AppColors.ink2,
           ),
-          SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Toyota Yaris 2019 · gris plata',
-                  style: TextStyle(
+                  '${PassengerData.driver.vehicle} · gris plata',
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  '4 asientos para pasajeros',
-                  style: TextStyle(fontSize: 13, color: AppColors.ink2),
+                  PassengerData.driver.vehicleSeats,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink2),
                 ),
               ],
             ),
@@ -249,24 +247,26 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
+    final DriverReview review = PassengerData.driver.reviews.first;
+
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              _Stars(count: 5),
-              Spacer(),
+              _Stars(count: review.stars),
+              const Spacer(),
               Text(
-                'Andrea M. · 2 oct',
-                style: TextStyle(fontSize: 13, color: AppColors.ink3),
+                '${review.author} · ${review.date}',
+                style: const TextStyle(fontSize: 13, color: AppColors.ink3),
               ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Puntual y muy amable. El auto estaba limpio.',
-            style: TextStyle(
+            review.text,
+            style: const TextStyle(
               fontSize: 14,
               height: 1.4,
               color: AppColors.ink,

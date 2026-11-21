@@ -80,10 +80,7 @@ class _LatePenaltySheet extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Text(
-                        'S/ 3.00',
-                        style: AppTypography.highlightedData,
-                      ),
+                      Text('S/ 3.00', style: AppTypography.highlightedData),
                     ],
                   ),
                   SizedBox(height: AppSpacing.md),
@@ -91,11 +88,7 @@ class _LatePenaltySheet extends StatelessWidget {
                   SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
-                      Icon(
-                        Icons.credit_card,
-                        size: 19,
-                        color: AppColors.ink2,
-                      ),
+                      Icon(Icons.credit_card, size: 19, color: AppColors.ink2),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -148,8 +141,7 @@ class _LatePenaltySheet extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusPill),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   ),
                   textStyle: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,

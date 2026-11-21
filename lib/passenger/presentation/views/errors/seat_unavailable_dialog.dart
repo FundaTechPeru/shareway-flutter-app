@@ -27,8 +27,12 @@ class SeatUnavailableDialog extends StatelessWidget {
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xl,
-            AppSpacing.xl, AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -70,7 +74,8 @@ class SeatUnavailableDialog extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop(); // cierra el diálogo
                   Navigator.of(context).popUntil(
-                    (route) => route.settings.name == '/passenger/search/results',
+                    (route) =>
+                        route.settings.name == '/passenger/search/results',
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -78,8 +83,7 @@ class SeatUnavailableDialog extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusPill),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   ),
                   textStyle: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
@@ -92,10 +96,8 @@ class SeatUnavailableDialog extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/passenger',
-                  (route) => false,
-                );
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/passenger', (route) => false);
               },
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,

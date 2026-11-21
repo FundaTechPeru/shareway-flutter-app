@@ -1,17 +1,49 @@
 import 'package:flutter/material.dart';
 
+import '../../../repositories/trip_repository.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
+import '../../../data/trips_extra_data.dart';
 import '../../passenger_shell.dart';
 import '../../widgets/live_trip_map.dart';
 import 'share_location_screen.dart';
 
 /// PAS-12 · Viaje en curso
-class LiveTripScreen extends StatelessWidget {
+class LiveTripScreen extends StatefulWidget {
   const LiveTripScreen({super.key});
 
   static const String routeName = '/passenger/live-trip';
+
+  @override
+  State<LiveTripScreen> createState() => _LiveTripScreenState();
+}
+
+class _LiveTripScreenState extends State<LiveTripScreen> {
+  final TripRepository _tripRepository = TripRepository();
+  String? _tripId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic> && args['tripId'] != null) {
+      _tripId = args['tripId'].toString();
+      _fetchTrip();
+    }
+  }
+
+  Future<void> _fetchTrip() async {
+    if (_tripId == null) return;
+    try {
+      await _tripRepository.getTripDetail(_tripId!);
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (_) {
+      if (mounted) {}
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,12 +72,13 @@ class LiveTripScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusPill),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.radiusPill,
+                      ),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Text(
-                      'Viaje en curso',
+                      TripsExtraData.liveTrip.statusLabel,
                       style: AppTypography.body.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.success,
@@ -56,10 +89,7 @@ class LiveTripScreen extends StatelessWidget {
               ),
             ),
           ),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: _TripPanel(),
-          ),
+          const Align(alignment: Alignment.bottomCenter, child: _TripPanel()),
         ],
       ),
     );
@@ -100,6 +130,8 @@ class _TripPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final LiveTripUpdate live = TripsExtraData.liveTrip;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
@@ -137,12 +169,12 @@ class _TripPanel extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Llegas a las 7:38 a. m.',
+              live.eta,
               style: AppTypography.screenTitle.copyWith(fontSize: 25),
             ),
             const SizedBox(height: 5),
             Text(
-              'San Isidro · faltan 14 minutos',
+              live.etaDetail,
               style: AppTypography.body.copyWith(color: AppColors.ink2),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -160,14 +192,14 @@ class _TripPanel extends StatelessWidget {
                 color: AppColors.successSoft,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.share, size: 17, color: AppColors.success),
-                  SizedBox(width: 10),
+                  const Icon(Icons.share, size: 17, color: AppColors.success),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Compartes tu ubicación con Rosa (mamá)',
-                      style: TextStyle(
+                      live.shareStatus,
+                      style: const TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.success,
@@ -230,6 +262,8 @@ class _NextStopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final LiveTripUpdate live = TripsExtraData.liveTrip;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -237,27 +271,30 @@ class _NextStopCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SoftCircle(icon: Icons.location_on, color: AppColors.accentSoft),
-          SizedBox(width: 14),
+          const _SoftCircle(
+            icon: Icons.location_on,
+            color: AppColors.accentSoft,
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Próxima: Av. Arenales con Canevaro',
-                  style: TextStyle(
+                  live.nextStopTitle,
+                  style: const TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'En 3 min · sube 1 pasajero',
-                  style: TextStyle(fontSize: 13, color: AppColors.ink2),
+                  live.nextStopSubtitle,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink2),
                 ),
               ],
             ),
@@ -297,6 +334,8 @@ class _DriverRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final LiveTripUpdate live = TripsExtraData.liveTrip;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -304,46 +343,42 @@ class _DriverRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Row(
+      child: Row(
         children: [
           CircleAvatar(
             radius: 20,
             backgroundColor: AppColors.primarySoft,
             child: Text(
-              'CH',
-              style: TextStyle(
+              live.driver.initials,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryDark,
               ),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Carlos Huamán · BKL-482',
-                  style: TextStyle(
+                  '${live.driver.name} · ${live.driver.plate}',
+                  style: const TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'Toyota Yaris gris plata',
-                  style: TextStyle(fontSize: 13, color: AppColors.ink2),
+                  live.vehicleLine,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink2),
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.call,
-            size: 22,
-            color: AppColors.primary,
-          ),
+          const Icon(Icons.call, size: 22, color: AppColors.primary),
         ],
       ),
     );
@@ -374,8 +409,7 @@ class _PanelButton extends StatelessWidget {
                 backgroundColor: AppColors.primarySoft,
                 foregroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusPill),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                 ),
                 textStyle: AppTypography.body.copyWith(
                   fontWeight: FontWeight.w600,
@@ -390,8 +424,7 @@ class _PanelButton extends StatelessWidget {
                 foregroundColor: AppColors.ink,
                 side: const BorderSide(color: AppColors.border),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusPill),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                 ),
                 textStyle: AppTypography.body.copyWith(
                   fontWeight: FontWeight.w600,

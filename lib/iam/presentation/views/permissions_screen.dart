@@ -22,10 +22,8 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
   bool _notifications = true;
 
   void _continue() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      PassengerShell.routeName,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(PassengerShell.routeName, (route) => false);
   }
 
   @override
@@ -54,24 +52,24 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
                     Text(
                       'Los usamos solo para tus viajes. Puedes cambiarlos '
                       'cuando quieras.',
-                      style:
-                          AppTypography.body.copyWith(color: AppColors.ink2),
+                      style: AppTypography.body.copyWith(color: AppColors.ink2),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _PermissionCard(
                       icon: Icons.location_on_outlined,
                       title: 'Ubicación',
-                      subtitle: 'Para mostrarte rutas cercanas y compartir '
+                      subtitle:
+                          'Para mostrarte rutas cercanas y compartir '
                           'tu recorrido en vivo.',
                       value: _location,
-                      onChanged: (value) =>
-                          setState(() => _location = value),
+                      onChanged: (value) => setState(() => _location = value),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _PermissionCard(
                       icon: Icons.notifications_outlined,
                       title: 'Notificaciones',
-                      subtitle: 'Para avisarte de confirmaciones, cambios y '
+                      subtitle:
+                          'Para avisarte de confirmaciones, cambios y '
                           'la llegada del vehículo.',
                       value: _notifications,
                       onChanged: (value) =>

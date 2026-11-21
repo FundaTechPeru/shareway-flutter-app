@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+import '../../../data/passenger_data.dart';
 import '../booking/booking_detail_screen.dart';
 import '../booking/rate_trip_screen.dart';
 import 'past_trip_detail_screen.dart';
@@ -49,31 +50,23 @@ class _TripsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<UpcomingTrip> upcoming = PassengerData.upcomingTrips;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
       children: [
         const _SectionLabel('Próximos'),
-        _UpcomingTrip(
-          weekday: 'MIE',
-          day: '7',
-          month: 'oct',
-          onTap: () =>
-              Navigator.of(context).pushNamed(BookingDetailScreen.routeName),
-        ),
-        const SizedBox(height: 12),
-        _UpcomingTrip(
-          weekday: 'JUE',
-          day: '8',
-          month: 'oct',
-          onTap: () =>
-              Navigator.of(context).pushNamed(BookingDetailScreen.routeName),
-        ),
+        for (int i = 0; i < upcoming.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          _UpcomingTrip(
+            trip: upcoming[i],
+            onTap: () =>
+                Navigator.of(context).pushNamed(BookingDetailScreen.routeName),
+          ),
+        ],
         const SizedBox(height: 24),
         const _SectionLabel('Pasados'),
-        _PastTripsCard(
-          onOpenFirst: () =>
-              Navigator.of(context).pushNamed(PastTripDetailScreen.routeName),
-        ),
+        const _PastTripsCard(),
       ],
     );
   }
@@ -98,16 +91,9 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _UpcomingTrip extends StatelessWidget {
-  const _UpcomingTrip({
-    required this.weekday,
-    required this.day,
-    required this.month,
-    this.onTap,
-  });
+  const _UpcomingTrip({required this.trip, this.onTap});
 
-  final String weekday;
-  final String day;
-  final String month;
+  final UpcomingTrip trip;
   final VoidCallback? onTap;
 
   @override
@@ -135,7 +121,7 @@ class _UpcomingTrip extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    weekday,
+                    trip.weekday,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -143,7 +129,7 @@ class _UpcomingTrip extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    day,
+                    trip.day,
                     style: const TextStyle(
                       fontSize: 24,
                       height: 1.15,
@@ -152,7 +138,7 @@ class _UpcomingTrip extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    month,
+                    trip.month,
                     style: const TextStyle(fontSize: 11, color: AppColors.ink2),
                   ),
                 ],
@@ -163,23 +149,30 @@ class _UpcomingTrip extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Lince → San Isidro',
-                    style: TextStyle(
+                  Text(
+                    trip.route,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.schedule, size: 15, color: AppColors.ink2),
-                      SizedBox(width: 5),
+                      const Icon(
+                        Icons.schedule,
+                        size: 15,
+                        color: AppColors.ink2,
+                      ),
+                      const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          'Sale 7:10 a. m. · con Carlos H.',
-                          style: TextStyle(fontSize: 13, color: AppColors.ink2),
+                          trip.detail,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.ink2,
+                          ),
                         ),
                       ),
                     ],
@@ -218,7 +211,7 @@ class _UpcomingTrip extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        '4 de 4 pasajeros',
+                        trip.passengers,
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -236,12 +229,12 @@ class _UpcomingTrip extends StatelessWidget {
 }
 
 class _PastTripsCard extends StatelessWidget {
-  const _PastTripsCard({this.onOpenFirst});
-
-  final VoidCallback? onOpenFirst;
+  const _PastTripsCard();
 
   @override
   Widget build(BuildContext context) {
+    final List<PastTrip> trips = PassengerData.pastTrips;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -250,29 +243,36 @@ class _PastTripsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _PastTrip(
-            status: _PastStatus.done,
-            title: 'Vie 2 oct · Lince a San Isidro',
-            subtitle: 'S/ 7.50 · Calificaste con 5 estrellas',
-            onTap: onOpenFirst,
-          ),
-          const Divider(height: 1),
-          _PastTrip(
-            status: _PastStatus.done,
-            title: 'Mié 30 sep · Lince a Miraflores',
-            subtitle: 'S/ 7.00 · Aún sin calificar',
-            onTap: () =>
-                Navigator.of(context).pushNamed(RateTripScreen.routeName),
-          ),
-          Divider(height: 1),
-          _PastTrip(
-            status: _PastStatus.cancelled,
-            title: 'Lun 28 sep · Lince a San Isidro',
-            subtitle: 'Cancelado por ti · sin penalidad',
-          ),
+          for (int i = 0; i < trips.length; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            _PastTrip(
+              status: trips[i].cancelled
+                  ? _PastStatus.cancelled
+                  : _PastStatus.done,
+              title: trips[i].title,
+              subtitle: trips[i].subtitle,
+              onTap: _onTapForAction(context, trips[i].action),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  /// Navegación asociada a cada [PastTripAction].
+  static VoidCallback? _onTapForAction(
+    BuildContext context,
+    PastTripAction action,
+  ) {
+    switch (action) {
+      case PastTripAction.openDetail:
+        return () =>
+            Navigator.of(context).pushNamed(PastTripDetailScreen.routeName);
+      case PastTripAction.rate:
+        return () => Navigator.of(context).pushNamed(RateTripScreen.routeName);
+      case PastTripAction.none:
+        return null;
+    }
   }
 }
 

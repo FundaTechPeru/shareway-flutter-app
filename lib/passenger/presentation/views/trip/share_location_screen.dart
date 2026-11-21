@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../data/passenger_data.dart';
 import '../emergency/expired_link_screen.dart';
 import '../emergency/live_tracking_screen.dart';
 
@@ -22,23 +23,6 @@ class ShareLocationScreen extends StatefulWidget {
 
 class _ShareLocationScreenState extends State<ShareLocationScreen> {
   int _selected = 0;
-
-  static const List<_Contact> _contacts = [
-    _Contact(
-      initials: 'RP',
-      name: 'Rosa Paredes',
-      meta: 'Mamá · +51 9•• ••204',
-      background: AppColors.accentSoft,
-      foreground: AppColors.warning,
-    ),
-    _Contact(
-      initials: 'DP',
-      name: 'Diego Paredes',
-      meta: 'Hermano · +51 9•• •• 871',
-      background: AppColors.primarySoft,
-      foreground: AppColors.primaryDark,
-    ),
-  ];
 
   void _share() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -76,10 +60,14 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
                       ),
                       child: Column(
                         children: [
-                          for (int i = 0; i < _contacts.length; i++) ...[
+                          for (
+                            int i = 0;
+                            i < PassengerData.shareContacts.length;
+                            i++
+                          ) ...[
                             if (i > 0) const Divider(),
                             _ContactRow(
-                              contact: _contacts[i],
+                              contact: PassengerData.shareContacts[i],
                               selected: _selected == i,
                               onTap: () => setState(() => _selected = i),
                             ),
@@ -141,22 +129,6 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
   }
 }
 
-class _Contact {
-  const _Contact({
-    required this.initials,
-    required this.name,
-    required this.meta,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String initials;
-  final String name;
-  final String meta;
-  final Color background;
-  final Color foreground;
-}
-
 class _ContactRow extends StatelessWidget {
   const _ContactRow({
     required this.contact,
@@ -164,7 +136,7 @@ class _ContactRow extends StatelessWidget {
     required this.onTap,
   });
 
-  final _Contact contact;
+  final ShareContact contact;
   final bool selected;
   final VoidCallback onTap;
 

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../repositories/booking_repository.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_bottom_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/bookings_data.dart';
 
 /// PAS-14 · Cancelar reserva
 class CancelBookingScreen extends StatefulWidget {
@@ -18,6 +21,8 @@ class CancelBookingScreen extends StatefulWidget {
 }
 
 class _CancelBookingScreenState extends State<CancelBookingScreen> {
+  final BookingRepository _bookingRepository = BookingRepository();
+  String? _bookingId;
   int _reason = 0;
 
   static const List<String> _reasons = [
@@ -27,11 +32,81 @@ class _CancelBookingScreenState extends State<CancelBookingScreen> {
     'Otro motivo',
   ];
 
-  void _confirm() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Reserva cancelada. Sin penalidad.')),
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      _bookingId = args['bookingId']?.toString();
+    }
+  }
+
+  Future<void> _confirm() async {
+    final bool? shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Confirmar cancelación?'),
+        content: const Text(
+          'Advertencia: Si faltan menos de 30 minutos para la salida, '
+          'se aplicará una penalidad del 20% de la tarifa estimada.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      ),
     );
-    Navigator.of(context).pop();
+
+    if (shouldCancel != true || !mounted) return;
+
+    if (_bookingId == null || _bookingId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reserva cancelada (modo local).')),
+      );
+      Navigator.of(context).pop();
+      return;
+    }
+
+    try {
+      final res = await _bookingRepository.cancelBooking(_bookingId!);
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Reserva Cancelada'),
+          content: Text(
+            res.penaltyAmount > 0
+                ? 'La reserva fue cancelada. Penalidad aplicada: ${res.formattedPenalty}.'
+                : 'La reserva fue cancelada exitosamente sin penalidad.',
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo cancelar la reserva.')),
+      );
+    }
   }
 
   @override
@@ -60,8 +135,9 @@ class _CancelBookingScreenState extends State<CancelBookingScreen> {
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.successSoft,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
                       ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,8 +190,9 @@ class _CancelBookingScreenState extends State<CancelBookingScreen> {
                             InkWell(
                               onTap: () => setState(() => _reason = i),
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 child: Row(
                                   children: [
                                     Expanded(
@@ -179,8 +256,9 @@ class _CancelBookingScreenState extends State<CancelBookingScreen> {
                         foregroundColor: AppColors.error,
                         side: const BorderSide(color: AppColors.error),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusPill),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusPill,
+                          ),
                         ),
                         textStyle: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w600,
@@ -208,17 +286,18 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TripSummary trip = BookingsData.cancelTrip;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Mié 7 oct · sale 7:10 a. m.',
+            trip.schedule,
             style: AppTypography.support.copyWith(color: AppColors.ink3),
           ),
           SizedBox(height: 5),
           Text(
-            'Lince → San Isidro',
+            trip.route,
             style: AppTypography.highlightedData.copyWith(fontSize: 21),
           ),
           SizedBox(height: AppSpacing.sm),
@@ -228,7 +307,7 @@ class _TripCard extends StatelessWidget {
               SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Recojo: Av. Arequipa con Risso',
+                  'Recojo: ${trip.pickup}',
                   style: AppTypography.support,
                 ),
               ),

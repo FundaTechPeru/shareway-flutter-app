@@ -4,6 +4,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../data/trips_extra_data.dart';
 import '../booking/trip_receipt_screen.dart';
 
 /// PAS-19 · Detalle de viaje pasado (con opción de bloquear usuario)
@@ -14,9 +15,11 @@ class PastTripDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<PastTripPerson> people = TripsExtraData.pastTrip.people;
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Viaje del vie 2 oct')),
+      appBar: AppBar(title: Text(TripsExtraData.pastTrip.title)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -38,38 +41,17 @@ class PastTripDetailScreen extends StatelessWidget {
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
-                children: const [
-                  _PersonRow(
-                    initials: 'CH',
-                    name: 'Carlos Huamán',
-                    role: 'Conductor · 4.8',
-                    background: AppColors.primarySoft,
-                    foreground: AppColors.primaryDark,
-                  ),
-                  Divider(),
-                  _PersonRow(
-                    initials: 'AM',
-                    name: 'Andrea M.',
-                    role: 'Pasajera',
-                    background: AppColors.accentSoft,
-                    foreground: AppColors.warning,
-                  ),
-                  Divider(),
-                  _PersonRow(
-                    initials: 'LT',
-                    name: 'Luis T.',
-                    role: 'Pasajero',
-                    background: AppColors.primarySoft,
-                    foreground: AppColors.primaryDark,
-                  ),
-                  Divider(),
-                  _PersonRow(
-                    initials: 'RC',
-                    name: 'Rosa C.',
-                    role: 'Pasajera',
-                    background: AppColors.accentSoft,
-                    foreground: AppColors.warning,
-                  ),
+                children: [
+                  for (int i = 0; i < people.length; i++) ...[
+                    if (i > 0) const Divider(),
+                    _PersonRow(
+                      initials: people[i].initials,
+                      name: people[i].name,
+                      role: people[i].role,
+                      background: people[i].background,
+                      foreground: people[i].foreground,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -117,14 +99,16 @@ class PastTripDetailScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 50,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.of(context)
-                          .pushNamed(TripReceiptScreen.routeName),
+                      onPressed: () =>
+                          Navigator.of(context)
+                              .pushNamed(TripReceiptScreen.routeName),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusPill),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusPill,
+                          ),
                         ),
                         textStyle: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w600,
@@ -144,8 +128,9 @@ class PastTripDetailScreen extends StatelessWidget {
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusPill),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusPill,
+                          ),
                         ),
                         textStyle: AppTypography.body.copyWith(
                           fontWeight: FontWeight.w600,
@@ -170,6 +155,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final PastTripDetail trip = TripsExtraData.pastTrip;
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,18 +172,18 @@ class _SummaryCard extends StatelessWidget {
                   color: AppColors.successSoft,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle,
                       size: 14,
                       color: AppColors.success,
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Text(
-                      'Finalizado',
-                      style: TextStyle(
+                      trip.statusLabel,
+                      style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.success,
@@ -207,19 +194,19 @@ class _SummaryCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'S/ 7.50',
+                trip.price,
                 style: AppTypography.highlightedData.copyWith(fontSize: 18),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Lince → San Isidro',
+            trip.route,
             style: AppTypography.highlightedData.copyWith(fontSize: 21),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            '7:10 a 7:36 a. m. · calificaste con 5 estrellas',
+            trip.details,
             style: AppTypography.support.copyWith(color: AppColors.ink2),
           ),
         ],
@@ -253,7 +240,10 @@ class _PersonRow extends StatelessWidget {
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: background,
+              shape: BoxShape.circle,
+            ),
             child: Text(
               initials,
               style: TextStyle(

@@ -93,10 +93,7 @@ class _PriceChangeSheet extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Text(
-                        '+ S/ 0.60',
-                        style: AppTypography.highlightedData,
-                      ),
+                      Text('+ S/ 0.60', style: AppTypography.highlightedData),
                     ],
                   ),
                 ],
@@ -139,8 +136,7 @@ class _PriceChangeSheet extends StatelessWidget {
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusPill),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   ),
                   textStyle: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
@@ -169,11 +165,7 @@ class _PriceChangeSheet extends StatelessWidget {
 }
 
 class _ChangeRow extends StatelessWidget {
-  const _ChangeRow({
-    required this.label,
-    required this.from,
-    required this.to,
-  });
+  const _ChangeRow({required this.label, required this.from, required this.to});
 
   final String label;
   final String from;

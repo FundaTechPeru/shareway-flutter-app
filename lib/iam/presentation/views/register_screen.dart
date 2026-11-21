@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/network/api_exception.dart';
+import '../../../passenger/repositories/auth_repository.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -25,6 +27,117 @@ class _RegisterScreenState extends State<RegisterScreen> {
   _AccountRole _role = _AccountRole.passenger;
   bool _acceptTerms = true;
 
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  final AuthRepository _authRepository = AuthRepository();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _fullNameError;
+  String? _emailError;
+  String? _phoneError;
+  String? _passwordError;
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _errorMessage = null;
+      _fullNameError = null;
+      _emailError = null;
+      _phoneError = null;
+      _passwordError = null;
+    });
+
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+
+    if (fullName.isEmpty) {
+      setState(() => _fullNameError = 'Ingresa tu nombre completo');
+      return;
+    }
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Ingresa tu correo');
+      return;
+    }
+    if (phone.isEmpty) {
+      setState(() => _phoneError = 'Ingresa tu número de celular');
+      return;
+    }
+    if (password.length < 8 || password.length > 72) {
+      setState(
+        () =>
+            _passwordError = 'La contraseña debe tener entre 8 y 72 caracteres',
+      );
+      return;
+    }
+    final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(password);
+    final hasDigit = RegExp(r'[0-9]').hasMatch(password);
+    if (!hasLetter || !hasDigit) {
+      setState(
+        () => _passwordError =
+            'La contraseña debe incluir al menos una letra y un número',
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authRepository.register(
+        email: email,
+        password: password,
+        fullName: fullName,
+        phone: phone,
+      );
+
+      // Auto-iniciar sesión luego de registrarse
+      await _authRepository.login(email, password);
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(VerifyPhoneScreen.routeName);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        if (e.isConflict) {
+          _emailError = 'El correo ya se encuentra registrado';
+          _errorMessage =
+              'El correo especificado ya está registrado en ShareWay.';
+        } else if (e.isValidationError) {
+          _fullNameError = e.getFieldError('fullName');
+          _emailError = e.getFieldError('email');
+          _phoneError = e.getFieldError('phone');
+          _passwordError = e.getFieldError('password');
+          _errorMessage = e.message;
+        } else {
+          _errorMessage = e.message;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage =
+            'Ocurrió un error al crear la cuenta. Intenta de nuevo.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,37 +162,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: AppTypography.support,
                     ),
                     const SizedBox(height: 22),
-                    const AppTextField(
+                    if (_errorMessage != null) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorSoft,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _errorMessage!,
+                          style: AppTypography.support.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    AppTextField(
                       label: 'Nombre completo',
                       hint: 'Lucía Paredes Rojas',
                       icon: Icons.person_outline,
-                      autofillHints: [AutofillHints.name],
+                      controller: _fullNameController,
+                      errorText: _fullNameError,
+                      autofillHints: const [AutofillHints.name],
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    const AppTextField(
+                    AppTextField(
                       label: 'Correo',
                       hint: 'lucia.paredes@correo.pe',
                       icon: Icons.mail_outline,
+                      controller: _emailController,
+                      errorText: _emailError,
                       keyboardType: TextInputType.emailAddress,
-                      autofillHints: [AutofillHints.email],
+                      autofillHints: const [AutofillHints.email],
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    const AppTextField(
+                    AppTextField(
                       label: 'Celular',
                       hint: '+51 987 654 321',
                       icon: Icons.phone_outlined,
+                      controller: _phoneController,
+                      errorText: _phoneError,
                       keyboardType: TextInputType.phone,
-                      autofillHints: [AutofillHints.telephoneNumber],
+                      autofillHints: const [AutofillHints.telephoneNumber],
                       textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    const AppTextField(
+                    AppTextField(
                       label: 'Contraseña',
                       icon: Icons.lock_outline,
+                      controller: _passwordController,
+                      errorText: _passwordError,
                       obscureText: true,
                       textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
@@ -99,8 +238,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Expanded(
                           child: Text(
                             'Acepto los Términos y la Política de privacidad',
-                            style: AppTypography.support
-                                .copyWith(color: AppColors.ink),
+                            style: AppTypography.support.copyWith(
+                              color: AppColors.ink,
+                            ),
                           ),
                         ),
                       ],
@@ -115,15 +255,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   AppButton(
                     label: 'Continuar',
-                    onPressed: _acceptTerms
-                        ? () => Navigator.of(context)
-                            .pushNamed(VerifyPhoneScreen.routeName)
-                        : null,
+                    isLoading: _isLoading,
+                    onPressed: _acceptTerms && !_isLoading ? _submit : null,
                   ),
                   AppTextAction(
                     label: '¿Ya tienes cuenta? Inicia sesión',
-                    onPressed: () => Navigator.of(context)
-                        .pushNamed(LoginScreen.routeName),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(LoginScreen.routeName),
                   ),
                 ],
               ),
@@ -136,10 +274,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 }
 
 class _RoleSelector extends StatelessWidget {
-  const _RoleSelector({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _RoleSelector({required this.selected, required this.onChanged});
 
   final _AccountRole selected;
   final ValueChanged<_AccountRole> onChanged;
@@ -191,8 +326,7 @@ class _RoleOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color foreground =
-        selected ? AppColors.primaryDark : AppColors.ink2;
+    final Color foreground = selected ? AppColors.primaryDark : AppColors.ink2;
 
     return InkWell(
       onTap: onTap,
@@ -203,9 +337,7 @@ class _RoleOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-          border: selected
-              ? Border.all(color: AppColors.border)
-              : null,
+          border: selected ? Border.all(color: AppColors.border) : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

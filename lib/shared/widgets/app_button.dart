@@ -35,6 +35,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.expand = true,
     this.height = AppSpacing.buttonHeight,
+    this.isLoading = false,
   });
 
   final String label;
@@ -46,6 +47,7 @@ class AppButton extends StatelessWidget {
   final bool expand;
 
   final double height;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +80,13 @@ class AppButton extends StatelessWidget {
         border = null;
     }
 
-    final Widget child = icon == null
+    final Widget child = isLoading
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : icon == null
         ? Text(label)
         : Row(
             mainAxisSize: MainAxisSize.min,

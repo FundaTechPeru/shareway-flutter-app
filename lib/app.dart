@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'iam/presentation/views/forgot_password_screen.dart';
 import 'iam/presentation/views/login_screen.dart';
-import 'iam/presentation/views/onboarding_screen.dart';
 import 'iam/presentation/views/permissions_screen.dart';
 import 'iam/presentation/views/register_screen.dart';
 import 'iam/presentation/views/splash_screen.dart';
@@ -38,7 +37,7 @@ import 'shared/theme/app_theme.dart';
 /// El flujo de acceso (módulo **iam / ACC**) es:
 ///
 /// ```text
-/// Splash → Bienvenida → Iniciar sesión ⇄ Crear cuenta → Verificar celular
+/// Splash → Iniciar sesión ⇄ Crear cuenta → Verificar celular
 ///        → Permisos → PassengerShell
 /// ```
 ///
@@ -59,12 +58,11 @@ class ShareWayApp extends StatelessWidget {
       theme: AppTheme.light(),
       home: const SplashScreen(),
       routes: {
-        OnboardingScreen.routeName: (_) => const OnboardingScreen(),
+        PermissionsScreen.routeName: (_) => const PermissionsScreen(),
         LoginScreen.routeName: (_) => const LoginScreen(),
         RegisterScreen.routeName: (_) => const RegisterScreen(),
         VerifyPhoneScreen.routeName: (_) => const VerifyPhoneScreen(),
         ForgotPasswordScreen.routeName: (_) => const ForgotPasswordScreen(),
-        PermissionsScreen.routeName: (_) => const PermissionsScreen(),
 
         // ── Módulo passenger (PAS) ──────────────────────────────
         PassengerShell.routeName: (context) => PassengerShell(

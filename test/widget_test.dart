@@ -20,14 +20,14 @@ void main() {
     expect(find.text('Viajes compartidos y programados'), findsOneWidget);
   });
 
-  testWidgets('el splash navega al onboarding', (WidgetTester tester) async {
+  testWidgets('el splash navega a iniciar sesión', (WidgetTester tester) async {
     await tester.pumpWidget(const ShareWayApp());
 
     await tester.pump(const Duration(milliseconds: 2300));
     await tester.pumpAndSettle();
 
-    expect(find.text('Tu viaje compartido, sin improvisar'), findsOneWidget);
-    expect(find.text('Crear cuenta'), findsOneWidget);
+    expect(find.text('Ingresa para ver tus viajes programados.'), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsOneWidget);
   });
 
   testWidgets('EME-01 muestra el seguimiento en vivo', (tester) async {
