@@ -1,4 +1,5 @@
 import '../domain/driver_api_models.dart';
+import '../domain/driver_trip_api_models.dart';
 import '../../shared/data/secure_session_store.dart';
 import '../../shared/data/shareway_api_client.dart';
 
@@ -143,6 +144,23 @@ class DriverApiRepository {
         .whereType<Map<String, dynamic>>()
         .map(WeeklyAvailabilitySlot.fromJson)
         .toList(growable: false);
+  }
+
+  Future<List<DriverApiTrip>> listMyTrips() async {
+    final values = await client.getList('/api/v1/trips/mine');
+    final trips = <DriverApiTrip>[];
+    for (final value in values) {
+      if (value is! Map<String, dynamic>) continue;
+      final trip = DriverApiTrip.fromJson(value);
+      if (trip.id.isEmpty) {
+        throw const ShareWayApiException(
+          502,
+          'El servidor devolvió un viaje sin identificador.',
+        );
+      }
+      trips.add(trip);
+    }
+    return List.unmodifiable(trips);
   }
 
   Future<void> saveAvailability(List<WeeklyAvailabilitySlot> slots) async {
