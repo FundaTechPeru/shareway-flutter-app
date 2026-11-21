@@ -17,12 +17,16 @@ class RouteMapPreview extends StatefulWidget {
     this.height = 190,
     this.activeStop = 0,
     this.showVehicle = true,
+    this.allowDemoFallback = true,
+    this.routeLabel = 'Recorrido ilustrativo',
   });
 
   final List<DriverMapPoint>? points;
   final double height;
   final int activeStop;
   final bool showVehicle;
+  final bool allowDemoFallback;
+  final String routeLabel;
 
   @override
   State<RouteMapPreview> createState() => _RouteMapPreviewState();
@@ -34,6 +38,9 @@ class _RouteMapPreviewState extends State<RouteMapPreview> {
   @override
   Widget build(BuildContext context) {
     if (_mapTilerApiKey.isEmpty) {
+      if (!widget.allowDemoFallback) {
+        return _MapUnavailablePreview(height: widget.height);
+      }
       return IllustratedRouteMap(
         height: widget.height,
         activeStop: widget.activeStop,
@@ -41,9 +48,14 @@ class _RouteMapPreviewState extends State<RouteMapPreview> {
       );
     }
 
-    final points = widget.points == null || widget.points!.isEmpty
+    final providedPoints = widget.points;
+    if ((providedPoints == null || providedPoints.isEmpty) &&
+        !widget.allowDemoFallback) {
+      return _MapUnavailablePreview(height: widget.height);
+    }
+    final points = providedPoints == null || providedPoints.isEmpty
         ? DriverDemoMapRoutes.linceToSanIsidro
-        : widget.points!;
+        : providedPoints;
     final coordinates = points
         .map((point) => LatLng(point.latitude, point.longitude))
         .toList(growable: false);
@@ -136,7 +148,7 @@ class _RouteMapPreviewState extends State<RouteMapPreview> {
               left: 10,
               child: _MapLabel(
                 icon: Icons.alt_route_rounded,
-                label: 'Recorrido ilustrativo',
+                label: widget.routeLabel,
               ),
             ),
             Positioned(
@@ -195,6 +207,45 @@ class _RouteMapPreviewState extends State<RouteMapPreview> {
 
 Future<void> _openAttribution(String url) async {
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+}
+
+class _MapUnavailablePreview extends StatelessWidget {
+  const _MapUnavailablePreview({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: SizedBox(
+      height: height,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(color: ShareWayColors.pale),
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.map_outlined, color: ShareWayColors.muted, size: 30),
+                SizedBox(height: 8),
+                Text(
+                  'Mapa no disponible para este viaje',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ShareWayColors.secondaryInk,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _RoutePointMarker extends StatelessWidget {

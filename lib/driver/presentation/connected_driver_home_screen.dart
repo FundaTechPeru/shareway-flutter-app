@@ -229,7 +229,7 @@ class _ConnectedDriverHomeScreenState extends State<ConnectedDriverHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Propuestas y viajes',
+                    'Viajes y propuestas',
                     style: TextStyle(
                       color: ShareWayColors.primaryDark,
                       fontWeight: FontWeight.w700,
@@ -238,7 +238,7 @@ class _ConnectedDriverHomeScreenState extends State<ConnectedDriverHomeScreen> {
                   ),
                   const SizedBox(height: 5),
                   const Text(
-                    'El Gateway aún no ofrece una bandeja de propuestas ni viajes asignados al conductor. No mostramos aquí datos de demostración.',
+                    'Tus viajes confirmados se sincronizan desde ShareWay. La bandeja para responder propuestas está en integración.',
                     style: TextStyle(
                       color: ShareWayColors.secondaryInk,
                       fontSize: 12,
@@ -250,7 +250,7 @@ class _ConnectedDriverHomeScreenState extends State<ConnectedDriverHomeScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: widget.onOpenProposals,
-                      child: const Text('Ver estado'),
+                      child: const Text('Ver propuestas'),
                     ),
                   ),
                 ],

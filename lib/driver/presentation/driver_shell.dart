@@ -8,6 +8,7 @@ import '../../shared/widgets/shareway_components.dart';
 import 'driver_controller.dart';
 import 'driver_home_screen.dart';
 import 'connected_driver_home_screen.dart';
+import 'connected_driver_trips_screen.dart';
 import 'driver_profile_screen.dart';
 import 'driver_proposals_screen.dart';
 import 'driver_trips_screen.dart';
@@ -65,10 +66,10 @@ class _DriverShellState extends State<DriverShell> {
         controller: widget.controller,
         isConnected: widget.apiRepository != null,
       ),
-      DriverTripsScreen(
-        controller: widget.controller,
-        isConnected: widget.apiRepository != null,
-      ),
+      if (widget.apiRepository == null)
+        DriverTripsScreen(controller: widget.controller)
+      else
+        ConnectedDriverTripsScreen(repository: widget.apiRepository!),
       DriverProfileScreen(
         controller: widget.controller,
         account: widget.account,
@@ -107,7 +108,7 @@ class _DriverShellState extends State<DriverShell> {
                 ),
                 color: const Color(0xFFFFF1D1),
                 child: const Text(
-                  'Conectado al Gateway: perfil, documentos, vehículo y horario. Viajes y propuestas no tienen aún una bandeja de conductor.',
+                  'Conectado al Gateway: perfil, documentos, vehículo, horario y viajes. Propuestas: integración pendiente.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Color(0xFF795000), fontSize: 11),
                 ),
